@@ -6,11 +6,7 @@ export function HomePage() {
 
     return (
         <div>
-            <Link to="/" className="header">
-                <header>
-                    <h1>Hooplytics</h1>
-                </header>
-                <main>
+            <main>
                     <div className="search-container">
                         <select>
                             <option value="Players">Players</option>
@@ -19,7 +15,6 @@ export function HomePage() {
                         <input placeholder="Search"/>
                     </div>
                 </main>
-            </Link>
         </div>
     )
 }

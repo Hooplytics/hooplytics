@@ -12,7 +12,7 @@ export function AuthenticationPage() {
     }
 
     return (
-        <div>
+        <div className="authentication-container">
             <form className="authentication-form">
                 <div className="authentication-options">
                     <h5 className={login ? "active" : null} onClick={handleLogin}>Login</h5>

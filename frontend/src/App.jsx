@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, Link } from 'react-router-dom'
 
 import './App.css'
 
@@ -10,6 +10,11 @@ import { AuthenticationPage } from './components/AuthenticationPage'
 function App() {
   return (
     <div>
+      <Link to="/" className="header">
+                <header>
+                    <h1>Hooplytics</h1>
+                </header>
+            </Link>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
