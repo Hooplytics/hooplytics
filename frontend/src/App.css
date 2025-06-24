@@ -1,0 +1,119 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100vh; 
+}
+
+html, body {
+  background-image: linear-gradient(rgb(35, 35, 35), rgba(73, 73, 73, 0.779));
+  background-repeat: no-repeat;
+}
+
+header h1 {
+  padding-top: 100px;
+}
+
+.header{
+  width: fit-content;
+  margin: auto;
+  text-align: center;
+  text-decoration: none;
+  font-size: 50px;
+  font-weight: 100;
+  color: rgba(218, 163, 62, 0.737);
+}
+
+header h1:hover {
+  cursor: pointer;
+}
+
+.search-container {
+  width: fit-content;
+  margin: 150px auto;
+}
+
+.search-container select {
+  margin-right: 5px;
+  width: 85px;
+  height: 60px;
+  background-color: rgba(240, 248, 255, 0);
+  text-align: center;
+  color: rgb(192, 192, 192);
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+}
+
+.search-container input {
+  background-color: rgba(240, 248, 255, 0);
+  width: 575px;
+  height: 60px;
+  color: rgb(192, 192, 192);
+  border: 1px solid rgb(150, 150, 150);
+  text-indent: 10px;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+}
+
+.authentication-options {
+  display: flex;
+  gap: 50px;
+  color: rgb(192, 192, 192);
+  font-size: 45px;
+}
+
+.authentication-options .active{
+  text-decoration: underline;
+}
+
+.authentication-options h5:hover {
+  cursor: pointer;
+}
+
+.authentication-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.authentication-form input {
+  width: 300px;
+  height: 40px;
+  text-indent: 10px;
+  background-color: rgba(240, 248, 255, 0);
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+}
+
+.authentication-form button {
+  width: 85px;
+  height: 40px;
+  color: rgb(192, 192, 192);
+  background-color: rgba(240, 248, 255, 0);
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+}
+
+.authentication-form button:hover {
+  background-color: rgba(255, 255, 255, 0.17);
+  cursor: pointer;
+}
