@@ -12,27 +12,38 @@ export function AuthenticationPage() {
 
     const { session, signUp, logIn } = UserAuth();
     const navigate = useNavigate();
-    console.log(session);
 
-    const handleSignUp = async (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
             const result = await signUp(email, password);
 
             if (result.success) {
-                navigate("/home");
+                navigate("/profile");
             }
         } catch (error) {
-            alert("An error occurred signing in.");
+            alert("An error occurred signing up.");
         } finally {
             setLoading(false);
         }
     }
 
-    const handleSubmit = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-    };
+        setLoading(true);
+        try {
+            const result = await logIn(email, password);
+
+            if (result.success) {
+                navigate("/profile");
+            }
+        } catch (error) {
+            alert("Invalid login credentials.");
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <div>
@@ -42,10 +53,10 @@ export function AuthenticationPage() {
                 </header>
             </Link>
             <div className="authentication-container">
-                <form className="authentication-form" onSubmit={handleSignUp}>
+                <form className="authentication-form" onSubmit={isLogin ? handleLogin : handleSignup}>
                     <div className="authentication-options">
-                        <Link to="/login" className={isLogin ? "auth active" : "auth"}>Login</Link>
-                        <Link to="/signup" className={!isLogin ? "auth active" : "auth"}>Signup</Link>
+                        <Link to="/login" onClick={() => {setEmail(""); setPassword("");}} className={isLogin ? "auth active" : "auth"}>Login</Link>
+                        <Link to="/signup" onClick={() => {setEmail(""); setPassword("");}} className={!isLogin ? "auth active" : "auth"}>Signup</Link>
                     </div>
                     <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="Email" />
                     <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="Password" />
