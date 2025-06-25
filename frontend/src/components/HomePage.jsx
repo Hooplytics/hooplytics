@@ -6,6 +6,11 @@ export function HomePage() {
 
     return (
         <div>
+            <Link to="/home" className="header">
+                <header>
+                    <h1>Hooplytics</h1>
+                </header>
+            </Link>
             <main>
                     <div className="search-container">
                         <select>

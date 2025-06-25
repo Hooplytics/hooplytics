@@ -17,8 +17,7 @@ header h1 {
   padding-top: 100px;
 }
 
-.header{
-  width: fit-content;
+.header {
   margin: auto;
   text-align: center;
   text-decoration: none;
@@ -33,7 +32,12 @@ header h1:hover {
 
 .search-container {
   width: fit-content;
-  margin: 150px auto;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
 }
 
 .search-container select {
@@ -77,9 +81,13 @@ header h1:hover {
 .authentication-options {
   display: flex;
   gap: 40px;
+}
+
+.authentication-options .auth {
   color: rgb(192, 192, 192);
   font-size: 45px;
   margin-bottom: 10px;
+  text-decoration: none;
 }
 
 .authentication-options .active{
@@ -131,4 +139,42 @@ header h1:hover {
 
 select:focus, input:focus {
   outline: 1px solid rgb(255, 255, 255);
+}
+
+.profile-header h1 {
+  padding-top: 15px;
+}
+
+.profile-header{
+  width: fit-content;
+  margin: auto;
+  text-align: center;
+  text-decoration: none;
+  font-size: 30px;
+  font-weight: 100;
+  color: rgba(218, 163, 62, 0.737);
+}
+
+.profile-header h1:hover {
+  cursor: pointer;
+}
+
+.signout {
+  width: 85px;
+  height: 40px;
+  background-color: rgb(255, 114, 114);
+  color: white;
+  border: 0px;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+}
+
+.signout:hover {
+  cursor: pointer;
+  background-color: rgb(249, 88, 88);
+  border: 0px;
+  box-shadow: 0.5px 0.5px 10px rgb(255, 255, 255);
 }

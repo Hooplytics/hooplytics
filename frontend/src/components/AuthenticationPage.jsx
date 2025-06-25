@@ -1,28 +1,69 @@
-import { useState } from "react"
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { UserAuth } from "../context/AuthContext";
 
 export function AuthenticationPage() {
-    const [login, setLogin] = useState(true);
+    const { pathname } = useLocation();
+    const isLogin = pathname === "/login";
 
-    const handleLogin = () => {
-        setLogin(prev => true);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const { session, signUp, logIn } = UserAuth();
+    const navigate = useNavigate();
+
+    const handleSignup = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const result = await signUp(email, password);
+
+            if (result.success) {
+                navigate("/profile");
+            }
+        } catch (error) {
+            alert("An error occurred signing up.");
+        } finally {
+            setLoading(false);
+        }
     }
 
-    const handleSignup = () => {
-        setLogin(prev => false);
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const result = await logIn(email, password);
+
+            if (result.success) {
+                navigate("/profile");
+            }
+        } catch (error) {
+            alert("Invalid login credentials.");
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
-        <div className="authentication-container">
-            <form className="authentication-form">
-                <div className="authentication-options">
-                    <h5 className={login ? "active" : null} onClick={handleLogin}>Login</h5>
-                    <h5 className={!login ? "active" : null}  onClick={handleSignup}>Signup</h5>
-                </div>
-                <input placeholder="Username" />
-                <input placeholder="Password" />
-                {login && <button>Login</button>}
-                {!login && <button>Signup</button>}
-            </form>
+        <div>
+            <Link to="/home" className="header">
+                <header>
+                    <h1>Hooplytics</h1>
+                </header>
+            </Link>
+            <div className="authentication-container">
+                <form className="authentication-form" onSubmit={isLogin ? handleLogin : handleSignup}>
+                    <div className="authentication-options">
+                        <Link to="/login" onClick={() => {setEmail(""); setPassword("");}} className={isLogin ? "auth active" : "auth"}>Login</Link>
+                        <Link to="/signup" onClick={() => {setEmail(""); setPassword("");}} className={!isLogin ? "auth active" : "auth"}>Signup</Link>
+                    </div>
+                    <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="Email" />
+                    <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="Password" />
+                    {isLogin && <button type="submit" disabled={loading}>Login</button>}
+                    {!isLogin && <button type="submit" disabled={loading}>Signup</button>}
+                </form>
+            </div>
         </div>
     )
 }
