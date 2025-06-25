@@ -1,6 +1,7 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { UserAuth } from "../context/AuthContext";
+import { Loader } from "./Loader";
 
 export function AuthenticationPage() {
     const { pathname } = useLocation();
@@ -10,7 +11,7 @@ export function AuthenticationPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const { session, signUp, logIn } = UserAuth();
+    const { signUp, logIn } = UserAuth();
     const navigate = useNavigate();
 
     const handleSignup = async (e) => {
@@ -64,6 +65,7 @@ export function AuthenticationPage() {
                     {!isLogin && <button type="submit" disabled={loading}>Signup</button>}
                 </form>
             </div>
+            {loading && <Loader/>}
         </div>
     )
 }
