@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 
@@ -6,6 +6,10 @@ export function HomePage() {
     const { session, signOut } = UserAuth();
 
     const [searchOption, setSearchOption] = useState("Players");
+
+    const handleSearchOptionChange = (e) => {
+        setSearchOption(prev => e.target.value);
+    }
 
     return (
         <div>
@@ -25,13 +29,16 @@ export function HomePage() {
                 </header>
             </Link>
             <main>
-                    <div className="search-container">
-                        <select>
-                            <option value="Players">Players</option>
-                            <option value="Teams">Teams</option>
-                        </select>
-                        <input placeholder="Search"/>
-                    </div>
+                <div className="search-container">
+                    <select value={searchOption} onChange={handleSearchOptionChange}>
+                        <option value="Players">Players</option>
+                        <option value="Teams">Teams</option>
+                    </select>
+                    <input placeholder="Search"/>
+                </div>
+                <div className="search-results">
+                    
+                </div>
                 </main>
         </div>
     )

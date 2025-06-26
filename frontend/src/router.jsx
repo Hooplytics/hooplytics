@@ -7,7 +7,7 @@ import { AuthenticationPage } from "./components/AuthenticationPage";
 
 export const router = createBrowserRouter([
     { path: "/", element: <App/> },
-    { path: "/home", element: <HomePage /> },
+    { path: "/", element: <HomePage /> },
     { path: "/profile", element: <ProfilePage /> },
     { path: "/profile/players", element: <ProfilePage /> },
     { path: "/profile/teams", element: <ProfilePage /> },
