@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    "https://localhost:5173"
+    "http://localhost:5173"
 ]
 
 app.add_middleware(
@@ -41,7 +41,7 @@ def getPlayers(player: str):
             "TOV": row["TOV"],
             "FG%": round(row["FG_PCT"] * 100, 1),
             "3P%": round(row["FG3_PCT"] * 100, 1),
-            "image_url": f"https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png",
+            "image_url": f'https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png',
             **additionalInfo  
         })
 
@@ -57,7 +57,7 @@ def getTeams(team: str):
         teamInfo.append({
             "id": row["TEAM_ID"],
             "name": row["TEAM_NAME"],
-            "record": f"{row["W"]}-{row["L"]}",
+            "record": f'{row["W"]}-{row["L"]}',
             "PPG": row["PTS"],
             "PPG_RANK": row["PTS_RANK"],
             "AST": row["AST"],
@@ -97,4 +97,4 @@ def getTeams(team: str):
             "OPP_TOV_RANK": row["OPP_TOV_RANK"]
         })
 
-    return teamInfo    
+    return teamInfo   
