@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
+import { getSearchData } from "../utils/api";
+import { SearchDataContainer } from "./SearchDataContainer";
 
 export function HomePage() {
-    const { session, signOut } = UserAuth();
+    const { session } = UserAuth();
 
     const [searchOption, setSearchOption] = useState("Players");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [displayData, setDisplayData] = useState();
 
-    const handleSearchOptionChange = (e) => {
-        setSearchOption(prev => e.target.value);
+    const getData = async (searchQuery, searchOption) => {
+        const data = await getSearchData(searchQuery, searchOption);
+        if (data) {
+            setDisplayData(data);
+        }
     }
 
     return (
-        <div>
+        <div className="app-wraper">
             {session &&
                 <div className="home-profile">
                     <Link to="/profile"><img src="/profile.webp" className="home-profile-img" /></Link>
@@ -30,16 +37,16 @@ export function HomePage() {
             </Link>
             <main>
                 <div className="search-container">
-                    <select value={searchOption} onChange={handleSearchOptionChange}>
+                    <select value={searchOption} onChange={(e) => setSearchOption(e.target.value)}>
                         <option value="Players">Players</option>
                         <option value="Teams">Teams</option>
                     </select>
-                    <input placeholder="Search"/>
+                    <form onSubmit={(e) => { e.preventDefault(); getData(searchQuery, searchOption); }}>
+                        <input placeholder="Search" onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} type="text"/>
+                    </form>
                 </div>
-                <div className="search-results">
-                    
-                </div>
-                </main>
+                <SearchDataContainer/>
+            </main>
         </div>
     )
 }

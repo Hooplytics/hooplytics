@@ -18,7 +18,7 @@ export function ProfilePage() {
     }
 
     return (
-        <div>
+        <div className="app-wraper">
             <Link to="/home" className="profile-header">
                 <header>
                     <h1>Hooplytics</h1>

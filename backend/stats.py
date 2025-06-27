@@ -1,14 +1,11 @@
-import pandas as pd
-
 from nba_api.stats.library.http import NBAStatsHTTP
-from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.endpoints import leaguedashteamstats
 from nba_api.stats.endpoints import commonteamyears
 from nba_api.stats.endpoints import leaguedashplayerstats
 
 NBAStatsHTTP.headers = {
-    "User-Agent":      "Mozilla/5.0",          # mimic a real browser
+    "User-Agent":      "Mozilla/5.0",        
     "x-nba-stats-origin": "stats",
     "x-nba-stats-token":  "true",
     "Referer":          "https://www.nba.com",
@@ -39,6 +36,6 @@ def additionalPlayerInfo(player_id):
     info_df = commonplayerinfo.CommonPlayerInfo(player_id=player_id).get_data_frames()[0]
     return {
         "position": info_df["POSITION"].values[0],
-        "height": info_df["HEIGHT"].values[0],
+        "height": f'{info_df["HEIGHT"].values[0][0]}\'{info_df["HEIGHT"].values[0][2]}\"',
         "weight": info_df["WEIGHT"].values[0]
     }
