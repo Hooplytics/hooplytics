@@ -6,7 +6,6 @@ export function ProfilePage() {
 
     const { session, signOut } = UserAuth();
     const navigate = useNavigate();
-    console.log(session);
 
     const handleSignOut = async (e) => {
         e.preventDefault();
