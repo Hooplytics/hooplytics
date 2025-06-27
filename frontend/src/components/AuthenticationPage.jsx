@@ -48,7 +48,7 @@ export function AuthenticationPage() {
     }
 
     return (
-        <div className="app-wraper">
+        <div>
             <Link to="/home" className="header">
                 <header>
                     <h1>Hooplytics</h1>

@@ -19,7 +19,7 @@ export function HomePage() {
     }
 
     return (
-        <div className="app-wraper">
+        <div>
             {session &&
                 <div className="home-profile">
                     <Link to="/profile"><img src="/profile.webp" className="home-profile-img" /></Link>
