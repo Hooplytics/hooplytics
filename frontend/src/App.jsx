@@ -3,7 +3,7 @@ import { HomePage } from './components/HomePage'
 
 export function App() {
   return (
-    <div>
+    <div className="app-wraper">
       <HomePage />
     </div>
   )
