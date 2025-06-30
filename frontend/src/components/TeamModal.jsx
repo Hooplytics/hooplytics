@@ -1,40 +1,51 @@
 import "../App.css"
 
-export function TeamModal({ onClose }) {
+export function TeamModal({ onClose, data }) {
+
+    function formatRank(rank) {
+        const j = rank % 10,
+                k = rank % 100;
+        if (j === 1 && k !== 11) return `${rank}st`;
+        if (j === 2 && k !== 12) return `${rank}nd`;
+        if (j === 3 && k !== 13) return `${rank}rd`;
+        
+        return `${rank}th`;
+    }
+    console.log(data)
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
                 <div className="modal-content" onClick={(e) => e.stopPropagation}>
                     <p className="close-modal" onClick={onClose}>&times;</p>
                     <div className="team-header">
-                        <img src="https://cdn.nba.com/logos/nba/1610612742/global/L/logo.svg" />
+                        <img src={data?.logo_url} />
                     <div className="team-info">
-                        <h3>Dallas Mavericks (39-43)</h3>
+                        <h3>{data?.name} ({data?.record})</h3>
                         <div className="team-stats">
                             <div className="team-stats-column">
-                                <p>PTS: 114.2 | 15th</p>
-                                <p>AST: 25.2 | 22nd</p>
-                                <p>REB: 43 | 23rd</p>
+                                <p>PTS: {data?.pts.toFixed(1)} | {formatRank(data?.pts_rank)}</p>
+                                <p>AST: {data?.ast.toFixed(1)} | {formatRank(data?.ast_rank)}</p>
+                                <p>REB: {data?.reb.toFixed(1)} | {formatRank(data?.reb_rank)}</p>
                                 <p>OREB: 10.1 | 24th</p>
                             </div>
                             <div className="team-stats-column">
-                                <p>BLK: 5.4 | 7th</p>
-                                <p>STL: 7.8 | 21st</p>
-                                <p>TOV: 14 | 13rd</p>
+                                <p>BLK: {data?.blk.toFixed(1)} | {formatRank(data?.blk_rank)}</p>
+                                <p>STL: {data?.stl.toFixed(1)} | {formatRank(data?.stl_rank)}</p>
+                                <p>TOV: {data?.tov.toFixed(1)} | {formatRank(data?.tov_rank)}</p>
                             </div>
                             <div className="team-stats-column">
-                                <p>FG%: 47.9% | 10th</p>
-                                <p>3P%: 36.4% | 15th</p>
+                                <p>FG%: {data?.fg_pct.toFixed(1)}% | {formatRank(data?.fg_pct_rank)}</p>
+                                <p>3P%: {data?.fg3_pct.toFixed(1)}% | {formatRank(data?.fg3_pct_rank)}</p>
                             </div>
                             <div className="team-stats-column">
-                                <p>OPP PTS: 115.4 | 20th</p>
-                                <p>OPP REB: 45.3 | 25th</p>
-                                <p>OPP OREB: 12.1 | 29th</p>
+                                <p>OPP PTS: {data?.oppg.toFixed(1)} | {formatRank(data?.oppg_rank)}</p>
+                                <p>OPP REB: {data?.opp_reb.toFixed(1)} | {formatRank(data?.opp_reb_rank)}</p>
+                                <p>OPP OREB: {data?.opp_oreb.toFixed(1)} | {formatRank(data?.opp_oreb_rank)}</p>
                             </div>
                             <div className="team-stats-column">
-                                <p>OPP TOV: 13.2 | 24th</p>
-                                <p>OPP FG%: 46.9% | 18th</p>
-                                <p>OPP 3P%: 36.3% | 19th</p>
+                                <p>OPP TOV: {data?.opp_tov.toFixed(1)} | {formatRank(data?.opp_tov_rank)}</p>
+                                <p>OPP FG%: {data?.opp_fg_pct.toFixed(1)}% | {formatRank(data?.opp_fg_pct_rank)}</p>
+                                <p>OPP 3P%: {data?.opp_fg3_pct.toFixed(1)}% | {formatRank(data?.opp_fg3_pct_rank)}</p>
                             </div>
                         </div>
                         </div>

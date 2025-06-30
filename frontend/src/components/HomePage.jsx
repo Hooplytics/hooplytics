@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { getSearchData } from "../utils/api";
-import { SearchDataContainer } from "./SearchDataContainer";
+import { SearchContainer } from "./SearchContainer";
 
 export function HomePage() {
     const { session } = UserAuth();
@@ -17,6 +17,12 @@ export function HomePage() {
             setDisplayData(data);
         }
     }
+
+    useEffect(() => {
+        if (!searchQuery) {
+            setDisplayData([]);
+        }
+    }, [searchQuery])
 
     return (
         <div>
@@ -37,7 +43,7 @@ export function HomePage() {
             </Link>
             <main>
                 <div className="search-container">
-                    <select value={searchOption} onChange={(e) => setSearchOption(e.target.value)}>
+                    <select value={searchOption} onChange={(e) => { setSearchOption(e.target.value); setDisplayData([]); setSearchQuery(""); }}>
                         <option value="Players">Players</option>
                         <option value="Teams">Teams</option>
                     </select>
@@ -45,7 +51,7 @@ export function HomePage() {
                         <input placeholder="Search" onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} type="text"/>
                     </form>
                 </div>
-                <SearchDataContainer/>
+                <SearchContainer option={ searchOption } data={displayData}/>
             </main>
         </div>
     )
