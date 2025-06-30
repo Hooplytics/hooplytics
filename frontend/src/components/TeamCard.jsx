@@ -3,7 +3,7 @@ import "../App.css"
 import { useState } from "react";
 import { TeamModal } from "./TeamModal";
 
-export function TeamCard() {
+export function TeamCard({data}) {
     const [showModal, setShowModal] = useState(false);
     
     const handleShowModal = () => {
@@ -13,11 +13,11 @@ export function TeamCard() {
     return (
         <div>
             <div className="search-card" onClick={handleShowModal}>
-                <img src="https://cdn.nba.com/logos/nba/1610612742/global/L/logo.svg" />
-                <h5>Dallas Mavericks</h5>
-                <p>39-43</p>
+                <img src={data.logo_url} />
+                <h5>{data.name}</h5>
+                <p>{data.record}</p>
             </div>
-            {showModal && <TeamModal onClose={handleShowModal} />}
+            {showModal && <TeamModal data={data} onClose={handleShowModal} />}
         </div>
     )
 }

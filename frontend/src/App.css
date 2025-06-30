@@ -486,6 +486,7 @@ select:focus, input:focus {
 
 .team-header {
   display: flex;
+  gap: 10px;
   color: var(--primary-color);
   margin-top: 10px;
 }
