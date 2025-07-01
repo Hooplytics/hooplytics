@@ -12,7 +12,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
         
         return `${rank}th`;
     }
-    console.log(data)
+    
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
