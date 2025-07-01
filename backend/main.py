@@ -1,9 +1,9 @@
-from stats import player_season_stats_df as players
-from stats import team_season_offensive_stats_df as teamsO
-from stats import team_season_defensive_stats_df as teamsD
+from stats import getPlayerSeasonStats, getTeamOppStats, getTeamStats
 from stats import additionalPlayerInfo
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from requests.exceptions import ReadTimeout
 
 app = FastAPI()
 
@@ -21,6 +21,14 @@ app.add_middleware(
 
 @app.get("/search/players")
 def getPlayers(player: str):
+    try:
+        players = getPlayerSeasonStats()
+    except ReadTimeout:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "NBA Stats service is unavailable. Please try again later."}
+        )
+    
     matchedPlayers = players[players["PLAYER_NAME"].str.contains(player, case=False, na=False)]
     playerInfo = []
 
@@ -50,6 +58,15 @@ def getPlayers(player: str):
 
 @app.get("/search/teams")
 def getTeams(team: str):
+    try:
+        teamsO = getTeamStats()
+        teamsD = getTeamOppStats()
+    except ReadTimeout:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "NBA Stats service is unavailable. Please try again later."}
+        )
+    
     matched_o = teamsO[teamsO["TEAM_NAME"].str.contains(team, case=False, na=False)]
     matched_d = teamsD[teamsD["TEAM_NAME"].str.contains(team, case=False, na=False)]
 
@@ -110,3 +127,14 @@ def getTeams(team: str):
         team_info_list.append(info)
 
     return team_info_list
+
+@app.get("/health/nba")
+def nba_health_check():
+    try:
+        # only the first page of players, cached after first call
+        df = getPlayerSeasonStats().head(1)
+        return {"status": "up", "sample_player": df["PLAYER_NAME"].iloc[0]}
+    except ReadTimeout:
+        return JSONResponse(status_code=503, content={"status": "down"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})
