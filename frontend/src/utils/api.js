@@ -18,7 +18,7 @@ export async function getSearchData(searchQuery = '', searchOption) {
         };
         return await resp.json();
     } catch (err) {
-        console.error('getSearchData error:', err);
+        alert(err);
         return [];
     }
 }

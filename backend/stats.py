@@ -1,10 +1,12 @@
 from nba_api.stats.endpoints import commonplayerinfo, leaguedashplayerstats, leaguedashteamstats
 from functools import lru_cache
 
+currSeason = '2024-25'
+
 @lru_cache(maxsize=1)
 def getPlayerSeasonStats():
     return leaguedashplayerstats.LeagueDashPlayerStats(
-        season='2024-25',
+        season=currSeason,
         per_mode_detailed='PerGame'
     ).get_data_frames()[0]
 
@@ -12,7 +14,7 @@ def getPlayerSeasonStats():
 def getTeamStats():
     return leaguedashteamstats.LeagueDashTeamStats(
         per_mode_detailed="PerGame",
-        season="2024-25",
+        season=currSeason,
         measure_type_detailed_defense="Base"
     ).get_data_frames()[0]
 
@@ -20,7 +22,7 @@ def getTeamStats():
 def getTeamOppStats():
     return leaguedashteamstats.LeagueDashTeamStats(
         per_mode_detailed="PerGame",
-        season="2024-25",
+        season=currSeason,
         measure_type_detailed_defense="Opponent"
     ).get_data_frames()[0]
 
