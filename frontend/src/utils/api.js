@@ -13,7 +13,9 @@ export async function getSearchData(searchQuery = '', searchOption) {
         }
 
         const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
+        if (!resp.ok) {
+            throw new Error(`Fetch failed: ${resp.status}`)
+        };
         return await resp.json();
     } catch (err) {
         console.error('getSearchData error:', err);
@@ -22,13 +24,25 @@ export async function getSearchData(searchQuery = '', searchOption) {
 }
 
 export async function fetchPlayerById(id) {
-    const resp = await fetch(`${import.meta.env.VITE_WEB_URL}players/${encodeURIComponent(id)}`);
-    if (!resp.ok) throw new Error(`Player ${id} not found`);
-    return await resp.json();
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}players/${encodeURIComponent(id)}`);
+        if (!resp.ok) {
+            throw new Error(`Player ${id} not found`)
+        };
+        return await resp.json();
+    } catch (err) {
+        alert(err)
+    }
 }
 
 export async function fetchTeamById(id) {
-    const resp = await fetch(`${import.meta.env.VITE_WEB_URL}teams/${encodeURIComponent(id)}`);
-    if (!resp.ok) throw new Error(`Team ${id} not found`);
-    return await resp.json();
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}teams/${encodeURIComponent(id)}`);
+        if (!resp.ok) {
+            throw new Error(`Team ${id} not found`)
+        };
+        return await resp.json();
+    } catch (err) {
+        alert(err)
+    }
 }

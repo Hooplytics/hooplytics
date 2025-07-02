@@ -9,8 +9,8 @@ export function ProfilePage() {
     const { session, signOut } = UserAuth();
     const navigate = useNavigate();
     const { favorites, favoriteData } = useFavorites();
-    const showTeams   = pathname !== "/profile/players";
-    const showPlayers = pathname !== "/profile/teams";
+    const showTeams   = pathname !== "/profile/players"; // want teams to show when all or teams are selected
+    const showPlayers = pathname !== "/profile/teams"; // want players to show when all or players are selected
 
     const handleSignOut = async (e) => {
         e.preventDefault();

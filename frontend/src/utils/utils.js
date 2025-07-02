@@ -20,10 +20,10 @@ export async function toggleFavorite(userId, id, type) {
     .eq("target_type", type);
 
     if (count === 0) {
-    await supabase
-        .from("favorites")
-        .insert({ user_id: userId, target_id: id, target_type: type });
-    return true;  
+        await supabase
+            .from("favorites")
+            .insert({ user_id: userId, target_id: id, target_type: type });
+        return true;  
     }
     return false;
 }
