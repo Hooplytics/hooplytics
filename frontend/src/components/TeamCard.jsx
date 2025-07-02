@@ -4,6 +4,7 @@ import { useState } from "react"
 import { TeamModal } from "./TeamModal";
 import { UserAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { Tooltip } from "./Tooltip";
 
 export function TeamCard({data}) {
     const { session } = UserAuth();
@@ -30,7 +31,10 @@ export function TeamCard({data}) {
     return (
         <div>
             <div className="search-card" onClick={handleShowModal}>
-                {session && <img src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle}/>}
+                {session && <Tooltip text={isFav ? "Unfavorite team" : "Favorite team"} >
+                    <img src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle} />
+                </Tooltip>
+                }
                 <img src={data.logo_url} />
                 <h5>{data.name}</h5>
                 <p>{data.record}</p>

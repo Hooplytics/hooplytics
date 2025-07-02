@@ -72,18 +72,16 @@ export function FavoritesProvider({ children }) {
         const key    = type === "player" ? "players" : "teams";
 
         setFavorites((prev) => ({
-        ...prev,
-        [key]: nowFav
-            ? [...prev[key], id]
-            : prev[key].filter((x) => x !== id),
-        }));
+            ...prev,
+            [key]: nowFav ? [...prev[key], id] : prev[key].filter((x) => x !== id),
+        })); 
 
         if (!nowFav) {
-        delete cacheRef.current[key][id];
-        setFavoriteData({
-            ...favoriteData,
-            [key]: { ...cacheRef.current[key] }
-        });
+            delete cacheRef.current[key][id];
+            setFavoriteData({
+                ...favoriteData,
+                [key]: { ...cacheRef.current[key] }
+            });
         }
     };
 

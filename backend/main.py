@@ -1,4 +1,4 @@
-from stats import getPlayerSeasonStats, getTeamOppStats, getTeamStats
+from stats import getPlayerSeasonStats, getFullTeamStats
 from stats import additionalPlayerInfo
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,12 +23,10 @@ app.add_middleware(
 def getPlayers(player: str):
     try:
         players = getPlayerSeasonStats()
-    except ReadTimeout:
-        return JSONResponse(
-            status_code=503,
-            content={"detail": "NBA Stats service is unavailable. Please try again later."}
-        )
-    
+    except Exception as e:
+        print(f'Error fetching player data: {e}')
+        return
+
     matchedPlayers = players[players["PLAYER_NAME"].str.contains(player, case=False, na=False)]
     playerInfo = []
 
@@ -55,86 +53,131 @@ def getPlayers(player: str):
 
     return playerInfo
 
+@app.get("/players/{player_id}")
+def getPlayer(player_id: int):
+    try:
+        df = getPlayerSeasonStats()
+    except Exception as e:
+        print(f'Error fetching player data: {e}')
+        return
+    
+    matched = df[df["PLAYER_ID"] == player_id].iloc[0]
+    additionalInfo = additionalPlayerInfo(player_id)
+    return ({
+            "id": player_id,
+            "name": matched["PLAYER_NAME"],
+            "team": matched["TEAM_ABBREVIATION"],
+            "age": matched["AGE"],
+            "pts": matched["PTS"],
+            "ast": matched["AST"],
+            "reb": matched["REB"],
+            "blk": matched["BLK"],
+            "stl": matched["STL"],
+            "tov": matched["TOV"],
+            "fg_pct": round(matched["FG_PCT"] * 100, 1),
+            "fg3_pct": round(matched["FG3_PCT"] * 100, 1),
+            "image_url": f'https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png',
+            **additionalInfo  
+    })
+
 
 @app.get("/search/teams")
 def getTeams(team: str):
     try:
-        teamsO = getTeamStats()
-        teamsD = getTeamOppStats()
-    except ReadTimeout:
-        return JSONResponse(
-            status_code=503,
-            content={"detail": "NBA Stats service is unavailable. Please try again later."}
-        )
-    
-    matched_o = teamsO[teamsO["TEAM_NAME"].str.contains(team, case=False, na=False)]
-    matched_d = teamsD[teamsD["TEAM_NAME"].str.contains(team, case=False, na=False)]
-
-    d_map = {
-        row["TEAM_ID"]: row 
-        for _, row in matched_d.iterrows()
-    }
-
-    team_info_list = []
-
-    for _, o_row in matched_o.iterrows():
-        team_id = int(o_row["TEAM_ID"])
-        d_row = d_map.get(team_id)
-
-        info = {
-            "id": team_id,
-            "name": o_row["TEAM_NAME"],
-            "record": f'{o_row["W"]}-{o_row["L"]}',
-            "pts": o_row["PTS"],      
-            "pts_rank": o_row["PTS_RANK"],
-            "ast": o_row["AST"],      
-            "ast_rank": o_row["AST_RANK"],
-            "reb": o_row["REB"],      
-            "reb_rank": o_row["REB_RANK"],
-            "oreb": o_row["OREB"],     
-            "oreb_rank": o_row["OREB_RANK"],
-            "blk": o_row["BLK"],      
-            "blk_rank": o_row["BLK_RANK"],
-            "stl": o_row["STL"],      
-            "stl_rank": o_row["STL_RANK"],
-            "tov": o_row["TOV"],      
-            "tov_rank": o_row["TOV_RANK"],
-            "plus_minus": o_row["PLUS_MINUS"],
-            "plus_minus_rank": o_row["PLUS_MINUS_RANK"],
-            "fg_pct": o_row["FG_PCT"]  * 100, 
-            "fg_pct_rank": o_row["FG_PCT_RANK"],
-            "fg3_pct": o_row["FG3_PCT"] * 100, 
-            "fg3_pct_rank": o_row["FG3_PCT_RANK"],
-            "logo_url": f"https://cdn.nba.com/logos/nba/{team_id}/global/L/logo.svg",
-        }
-
-        if d_row is not None:
-            info.update({
-                "oppg": d_row["OPP_PTS"],
-                "oppg_rank": d_row["OPP_PTS_RANK"],
-                "opp_fg_pct": d_row["OPP_FG_PCT"]  * 100,
-                "opp_fg_pct_rank": d_row["OPP_FG_PCT_RANK"],
-                "opp_fg3_pct": d_row["OPP_FG3_PCT"] * 100,
-                "opp_fg3_pct_rank": d_row["OPP_FG3_PCT_RANK"],
-                "opp_reb": d_row["OPP_REB"],
-                "opp_reb_rank": d_row["OPP_REB_RANK"],
-                "opp_oreb": d_row["OPP_OREB"],
-                "opp_oreb_rank": d_row["OPP_OREB_RANK"],
-                "opp_tov": d_row["OPP_TOV"],
-                "opp_tov_rank": d_row["OPP_TOV_RANK"],
-            })
-
-        team_info_list.append(info)
-
-    return team_info_list
-
-@app.get("/health/nba")
-def nba_health_check():
-    try:
-        # only the first page of players, cached after first call
-        df = getPlayerSeasonStats().head(1)
-        return {"status": "up", "sample_player": df["PLAYER_NAME"].iloc[0]}
-    except ReadTimeout:
-        return JSONResponse(status_code=503, content={"status": "down"})
+        teams = getFullTeamStats() 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})
+        print(f'Error fetching teams: {e}')
+        return
+
+    matchedTeams = teams[teams["TEAM_NAME"].str.contains(team, case=False, na=False)]
+
+    teamInfo = []
+    for _, row in matchedTeams.iterrows():
+        team_id = int(row["TEAM_ID"])
+        teamInfo.append({
+            "id": team_id,
+            "name": row["TEAM_NAME"],
+            "record": f'{row["W"]}-{row["L"]}',
+            "pts": row["PTS"],        
+            "pts_rank": row["PTS_RANK"],
+            "ast": row["AST"],
+            "ast_rank":row["AST_RANK"],
+            "reb": row["REB"],
+            "reb_rank": row["REB_RANK"],
+            "oreb": row["OREB"],       
+            "oreb_rank": row["OREB_RANK"],
+            "blk": row["BLK"],        
+            "blk_rank": row["BLK_RANK"],
+            "stl": row["STL"],        
+            "stl_rank": row["STL_RANK"],
+            "tov": row["TOV"],        
+            "tov_rank": row["TOV_RANK"],
+            "plus_minus": row["PLUS_MINUS"], 
+            "plus_minus_rank": row["PLUS_MINUS_RANK"],
+            "fg_pct": row["FG_PCT"] * 100, 
+            "fg_pct_rank": row["FG_PCT_RANK"],
+            "fg3_pct": row["FG3_PCT"] * 100, 
+            "fg3_pct_rank": row["FG3_PCT_RANK"],
+            "oppg": row["OPP_PTS"],   
+            "oppg_rank": row["OPP_PTS_RANK"],
+            "opp_fg_pct": row["OPP_FG_PCT"] * 100, 
+            "opp_fg_pct_rank": row["OPP_FG_PCT_RANK"],
+            "opp_fg3_pct": row["OPP_FG3_PCT"] * 100, 
+            "opp_fg3_pct_rank": row["OPP_FG3_PCT_RANK"],
+            "opp_reb": row["OPP_REB"],   
+            "opp_reb_rank": row["OPP_REB_RANK"],
+            "opp_oreb": row["OPP_OREB"],  
+            "opp_oreb_rank": row["OPP_OREB_RANK"],
+            "opp_tov": row["OPP_TOV"],   
+            "opp_tov_rank": row["OPP_TOV_RANK"],
+            "logo_url": f"https://cdn.nba.com/logos/nba/{team_id}/global/L/logo.svg",
+        })
+
+    return teamInfo
+
+@app.get("/teams/{teamid}")
+def getTeam(teamid: int):
+    try:
+        df = getFullTeamStats() 
+    except Exception as e:
+        print(f'Error fetching teams: {e}')
+        return
+
+    matched = df[df["TEAM_ID"] == teamid].iloc[0]
+    return ({
+        "id": int(matched["TEAM_ID"]),
+        "name": matched["TEAM_NAME"],
+        "record": f'{matched["W"]}-{matched["L"]}',
+        "pts": int(matched["PTS"]),
+        "pts_rank": int(matched["PTS_RANK"]),
+        "ast": int(matched["AST"]),        
+        "ast_rank": int(matched["AST_RANK"]),
+        "reb": int(matched["REB"]),        
+        "reb_rank": int(matched["REB_RANK"]),
+        "oreb": int(matched["OREB"]),       
+        "oreb_rank": int(matched["OREB_RANK"]),
+        "blk": int(matched["BLK"]),        
+        "blk_rank": int(matched["BLK_RANK"]),
+        "stl": int(matched["STL"]),        
+        "stl_rank": int(matched["STL_RANK"]),
+        "tov": int(matched["TOV"]),        
+        "tov_rank": int(matched["TOV_RANK"]),
+        "plus_minus": float(matched["PLUS_MINUS"]), 
+        "plus_minus_rank": int(matched["PLUS_MINUS_RANK"]),
+        "fg_pct": round(float(matched["FG_PCT"])   * 100, 1), 
+        "fg_pct_rank": int(matched["FG_PCT_RANK"]),
+        "fg3_pct": round(float(matched["FG3_PCT"])  * 100, 1), 
+        "fg3_pct_rank": int(matched["FG3_PCT_RANK"]),
+        "oppg": float(matched["OPP_PTS"]),   
+        "oppg_rank": int(matched["OPP_PTS_RANK"]),
+        "opp_fg_pct": round(float(matched["OPP_FG_PCT"])   * 100, 1), 
+        "opp_fg_pct_rank": int(matched["OPP_FG_PCT_RANK"]),
+        "opp_fg3_pct": round(float(matched["OPP_FG3_PCT"])  * 100, 1), 
+        "opp_fg3_pct_rank": int(matched["OPP_FG3_PCT_RANK"]),
+        "opp_reb": float(matched["OPP_REB"]),   
+        "opp_reb_rank": int(matched["OPP_REB_RANK"]),
+        "opp_oreb": float(matched["OPP_OREB"]),  
+        "opp_oreb_rank": int(matched["OPP_OREB_RANK"]),
+        "opp_tov": float(matched["OPP_TOV"]),   "opp_tov_rank":  int(matched["OPP_TOV_RANK"]),
+        "logo_url": f"https://cdn.nba.com/logos/nba/{teamid}/global/L/logo.svg",
+    })

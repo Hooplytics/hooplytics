@@ -1,13 +1,5 @@
-from nba_api.stats.library.http import NBAStatsHTTP
 from nba_api.stats.endpoints import commonplayerinfo, leaguedashplayerstats, leaguedashteamstats
 from functools import lru_cache
-
-NBAStatsHTTP.headers = {
-    "User-Agent":      "Mozilla/5.0",        
-    "x-nba-stats-origin": "stats",
-    "x-nba-stats-token":  "true",
-    "Referer":          "https://www.nba.com",
-}
 
 @lru_cache(maxsize=1)
 def getPlayerSeasonStats():
@@ -31,6 +23,18 @@ def getTeamOppStats():
         season="2024-25",
         measure_type_detailed_defense="Opponent"
     ).get_data_frames()[0]
+
+@lru_cache(maxsize=1)
+def getFullTeamStats():
+    off_df = getTeamStats()    
+    opp_df = getTeamOppStats()
+    opp_df = opp_df.drop(columns=["TEAM_NAME", "W", "L", "PLUS_MINUS", "PLUS_MINUS_RANK"])
+
+    return off_df.merge(
+        opp_df,
+        on="TEAM_ID",
+        how="outer"
+    )
 
 def additionalPlayerInfo(player_id):
     info_df = commonplayerinfo.CommonPlayerInfo(player_id=player_id).get_data_frames()[0]

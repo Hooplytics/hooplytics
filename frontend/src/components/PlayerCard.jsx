@@ -3,6 +3,7 @@ import "../App.css"
 import { PlayerModal } from "./PlayerModal"
 import { UserAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { Tooltip } from "./Tooltip";
 
 export function PlayerCard({ data }) {
     const { session } = UserAuth();
@@ -17,8 +18,8 @@ export function PlayerCard({ data }) {
         try {  
             await toggle(data.id, "player");
         } catch (err) {
-            console.error("Could not toggle favorite:", err);
             setIsFav(prev => !prev);
+            alert("Could not toggle favorite:", err);
         }
     };
 
@@ -29,7 +30,10 @@ export function PlayerCard({ data }) {
     return (
         <div>
             <div className="search-card" onClick={handleShowModal}>
-                {session && <img src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle}/>}
+                {session && (<Tooltip text={isFav ? "Unfavorite player" : "Favorite player"} >
+                        <img src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle} />
+                    </Tooltip>)
+                }
                 <img src={data.image_url} />
                 <h5>{data.name} | {data.team}</h5>
                 <p>{data.height} | {data.weight} lbs</p>

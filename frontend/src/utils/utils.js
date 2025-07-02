@@ -8,7 +8,7 @@ export async function listFavorites(userId, type) {
     .eq("target_type", type)
     .order("created_at", { ascending: true });
     if (error) throw error;
-        return data.map(r => r.target_id);
+    return data.map(r => r.target_id);
 }
 
 export async function toggleFavorite(userId, id, type) {
