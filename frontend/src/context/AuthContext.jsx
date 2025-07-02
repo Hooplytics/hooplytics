@@ -44,8 +44,7 @@ export const AuthContextProvider = ({children})  => {
                 alert(`${error}`);
                 return { success: false, error: error.message };
             }
-
-            console.log(`Login success: ${data}`);
+            
             return { success: true, data };
         } catch (error) {
             console.error(`an error occured: ${error}`);

@@ -1,28 +1,48 @@
-export async function getSearchData(searchQuery, searchOption) {
+export async function getSearchData(searchQuery = '', searchOption) {
+    const opt = searchOption.toLowerCase();
+    const q   = searchQuery.trim().toLowerCase();
+
     try {
-        let webUrl = import.meta.env.VITE_WEB_URL;
-        if (searchOption === "Players") {
-            webUrl += "search/players";
-        } else {
-            webUrl += "search/teams";
-        }
-        const params = new URLSearchParams();
+        let url = `${import.meta.env.VITE_WEB_URL}${
+        opt === 'players' ? 'search/players' : 'search/teams'
+        }`;
 
-        if (searchQuery?.trim()) {
-            params.set(searchOption === "Players" ? "player" : "team", searchQuery);
+        if (q) {
+            const paramKey = opt === 'players' ? 'player' : 'team';
+            url += `?${paramKey}=${encodeURIComponent(q)}`;
         }
-
-        const queryString = params.toString();
-        const url = queryString ? `${webUrl}/?${queryString}` : webUrl;
 
         const resp = await fetch(url);
         if (!resp.ok) {
-            throw new Error("Failed to fetch data");
-        }
+            throw new Error(`Fetch failed: ${resp.status}`)
+        };
+        return await resp.json();
+    } catch (err) {
+        alert(err);
+        return [];
+    }
+}
 
-        const data = await resp.json();
-        return data;
-    } catch (error) {
-        console.error(`Fetch error: ${error}`);
+export async function fetchPlayerById(id) {
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}players/${encodeURIComponent(id)}`);
+        if (!resp.ok) {
+            throw new Error(`Player ${id} not found`)
+        };
+        return await resp.json();
+    } catch (err) {
+        alert(err)
+    }
+}
+
+export async function fetchTeamById(id) {
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}teams/${encodeURIComponent(id)}`);
+        if (!resp.ok) {
+            throw new Error(`Team ${id} not found`)
+        };
+        return await resp.json();
+    } catch (err) {
+        alert(err)
     }
 }
