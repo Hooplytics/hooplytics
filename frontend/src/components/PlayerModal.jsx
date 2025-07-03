@@ -4,8 +4,9 @@ import { getPlayerGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
-    const [graphOption, setGraphOption] = useState("points")
-    const [playerStats, setPlayerStats] = useState([])
+    const [graphOption, setGraphOption] = useState("points");
+    const [playerStats, setPlayerStats] = useState([]);
+    const canvasRef = useRef(null);
     
 
     const getPoints = async (id) => {
@@ -15,10 +16,6 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     useEffect(() => {
         getPoints(data.id);
     }, [data.id])
-
-    useEffect(() => {
-        console.log(playerStats);
-    }, [playerStats])
 
     return (
         <div className="modal">
