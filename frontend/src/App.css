@@ -484,8 +484,8 @@ select:focus, input:focus {
 }
 
 .modal-content img {
-  height: 20%;
-  width: 20%;
+  height: 18%;
+  width: 18%;
 }
 
 .player-header {
@@ -556,15 +556,16 @@ select:focus, input:focus {
   margin: auto;
 }
 
-.chart {
-  margin: auto;
+#canvas {
+  display: block;
+  margin: 0 auto;
   margin-top: 50px;
   height: 450px;
   width: 800px;
   border: 1px solid white;
 }
 
-.team-chart {
+#team-canvas {
   margin: auto;
   height: 450px;
   width: 800px;

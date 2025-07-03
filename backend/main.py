@@ -1,4 +1,4 @@
-from stats import getPlayerSeasonStats, getFullTeamStats
+from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog
 from stats import additionalPlayerInfo
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -80,6 +80,22 @@ def getPlayer(player_id: int):
             **additionalInfo  
     })
 
+@app.get("/player/{player_id}/games")
+def getPlayerPoints(player_id: int):
+    try:
+        stats = getPlayerGameLog(player_id)
+    except Exception as e:
+        print(f'Error fetching player games: {e}')
+    print(stats)
+
+    playerStats = []
+    for _, row in stats.iterrows():
+        playerStats.append({
+            "date": row["GAME_DATE"],
+            "points": row["PTS"]
+        })
+    
+    return playerStats
 
 @app.get("/search/teams")
 def getTeams(team: str):

@@ -1,7 +1,22 @@
+import { useEffect, useState, useRef } from "react"
 import "../App.css"
+import { getPlayerGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 
-export function PlayerModal({onClose, data, isFav, toggleFav }) {
+export function PlayerModal({ onClose, data, isFav, toggleFav }) {
+    const [graphOption, setGraphOption] = useState("points");
+    const [playerStats, setPlayerStats] = useState([]);
+    const canvasRef = useRef(null);
+    
+
+    const getPoints = async (id) => {
+        setPlayerStats((await getPlayerGameData(id)).reverse());
+    }
+
+    useEffect(() => {
+        getPoints(data.id);
+    }, [data.id])
+
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
@@ -36,7 +51,7 @@ export function PlayerModal({onClose, data, isFav, toggleFav }) {
                             </div>
                     </div>
                     </div>
-                    <div className="chart"><h1>CHART GOES HERE</h1></div>
+                <canvas id="canvas"></canvas>
             </div>
         </div>
     )
