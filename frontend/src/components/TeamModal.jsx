@@ -52,7 +52,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
                             </div>
                         </div>
                     </div>
-                <div className="team-chart"><h1>CHART GOES HERE</h1></div>
+                <canvas id="team-canvas"></canvas>
             </div>
         </div>
     )
