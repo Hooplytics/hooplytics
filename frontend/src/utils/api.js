@@ -31,7 +31,7 @@ export async function fetchPlayerById(id) {
         };
         return await resp.json();
     } catch (err) {
-        alert(err)
+        console.error(err)
     }
 }
 
@@ -43,6 +43,18 @@ export async function fetchTeamById(id) {
         };
         return await resp.json();
     } catch (err) {
-        alert(err)
+        console.error(err)
+    }
+}
+
+export async function getPlayerGameData(id) {
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}player/${id}/games`);
+        if (!resp.ok) {
+            throw new Error(`Cannot access player game log`)
+        }
+        return await resp.json();
+    } catch (err) {
+        console.error(err);
     }
 }
