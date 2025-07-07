@@ -18,55 +18,6 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         load()
     }, [data.id])
 
-  // redraw whenever playerStats changes
-//   useEffect(() => {
-//     const canvas = canvasRef.current
-//     if (!canvas || playerStats.length === 0) return
-//     const ctx = canvas.getContext("2d")
-//     const width = canvas.width
-//     const height = canvas.height
-
-//     // clear
-//     ctx.clearRect(0, 0, width, height)
-
-//     // margins
-//     const margin = { top: 20, right: 20, bottom: 30, left: 40 }
-//     const w = width - margin.left - margin.right
-//     const h = height - margin.top - margin.bottom
-
-//     // data → numbers
-//     const pts = playerStats.map((d) => d.points)
-//     const minY = Math.min(...pts)
-//     const maxY = Math.max(...pts)
-//     const xStep = w / (playerStats.length - 1 || 1)
-
-//     // move origin
-//     ctx.save()
-//     ctx.translate(margin.left, margin.top)
-
-//     // draw line
-//     ctx.beginPath()
-//     playerStats.forEach((pt, i) => {
-//       const x = i * xStep
-//       const y = h - ((pt.points - minY) / (maxY - minY || 1)) * h
-//       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-//     })
-//     ctx.strokeStyle = "#007bff"
-//     ctx.lineWidth = 2
-//     ctx.stroke()
-
-//     // draw dots
-//     ctx.fillStyle = "#007bff"
-//     playerStats.forEach((pt, i) => {
-//       const x = i * xStep
-//       const y = h - ((pt.points - minY) / (maxY - minY || 1)) * h
-//       ctx.beginPath()
-//       ctx.arc(x, y, 3, 0, Math.PI * 2)
-//       ctx.fill()
-//     })
-
-//     ctx.restore()
-//       }, [playerStats])
     
     useEffect(() => {
         const stats = playerStats.map(game => game[graphOption]);
@@ -119,7 +70,19 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
 
         context.font = "16px Arial";
         context.fillStyle = "white";
-        context.fillText(0, -18, height + 5);
+        context.fillText(0, -25, height + 5);
+
+        context.font = "16px Arial";
+        context.fillStyle = "white";
+        context.fillText(Math.round(maxY / 4), -25, (height / 4) * 3);
+
+        context.font = "16px Arial";
+        context.fillStyle = "white";
+        context.fillText(Math.round(maxY / 2), -25, (height / 4) * 2);
+
+        context.font = "16px Arial";
+        context.fillStyle = "white";
+        context.fillText(Math.round(maxY / 4 * 3), -25, height / 4);
 
         context.font = "16px Arial";
         context.fillStyle = "white";
@@ -179,6 +142,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="3pt_pct">3pt %</option>
                     </select>
                     <canvas ref={canvasRef} width={800} height={450} id="canvas" />
+                </div>
+                <div className="">
                 </div>
             </div>
         </div>
