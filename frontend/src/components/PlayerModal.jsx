@@ -4,22 +4,16 @@ import { getPlayerGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
+    const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
+
     const [graphOption, setGraphOption] = useState("points");
     const [playerStats, setPlayerStats] = useState([]);
     const canvasRef = useRef(null);
-    
 
-    useEffect(() => {
-        async function load() {
-            const stats = await getPlayerGameData(data.id)
-            setPlayerStats(stats)
-        }
-        
-        load()
-    }, [data.id])
+    const MARGIN_TR = 20; // margin for top and right
+    const MARGIN_BL = 40; // margin for bottom and left
 
-    
-    useEffect(() => {
+    const createGraph = () => {
         const stats = playerStats.map(game => game[graphOption]);
         const dates = playerStats.map(game => game.date);
 
@@ -30,16 +24,15 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         const containerWidth = canvas.width;
         context.clearRect(0, 0, containerWidth, containerHeight)
 
-        const margin = { top: 20, bottom: 40, left: 40, right: 20 };
-        const height = containerHeight - margin.top - margin.bottom;
-        const width = containerWidth - margin.left - margin.right;
+        const height = containerHeight - MARGIN_TR - MARGIN_BL;
+        const width = containerWidth - MARGIN_TR - MARGIN_BL;
         const xScale = width / (playerStats.length - 1)
         
         const maxY = Math.max(...stats);
         const yScale = height / maxY;
 
         context.save()
-        context.translate(margin.left, margin.top)
+        context.translate(MARGIN_BL, MARGIN_TR)
 
         context.beginPath();
         context.moveTo(0, 0);
@@ -64,6 +57,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
             lastX = x;
             lastY = y;
         });
+
         context.strokeStyle = "#007bff";
         context.lineWidth = 2;
         context.stroke();
@@ -90,6 +84,22 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     
 
         context.restore();
+    }
+    
+
+    useEffect(() => {
+        async function load() {
+            const stats = await getPlayerGameData(id)
+            setPlayerStats(stats)
+        }
+        
+        load()
+    }, [id])
+
+    
+    useEffect(() => {
+        createGraph();
+        console.log(playerStats);
     }, [playerStats, graphOption])
 
     return (
@@ -99,29 +109,29 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                 <p className="close-modal" onClick={onClose}>&times;</p>
                 <img className="modal-heart" src={isFav ? "/heart.png" : "empty-heart.png"} onClick={toggleFav} />
                 <div className="player-header">
-                    <img src={data.image_url} />
+                    <img src={image_url} />
                     <div className="player-info">
                         <div className="player-metrics">
-                            <h3>{data.name} | {data.team} </h3>
-                            <h6>{data.position}</h6>
-                            <h6><strong>Age:</strong> {data.age}</h6>
-                            <h6><strong>Height:</strong> {data.height}</h6>
-                            <h6><strong>Weight:</strong> {data.weight} lbs</h6>
+                            <h3>{name} | {team} </h3>
+                            <h6>{position}</h6>
+                            <h6><strong>Age:</strong> {age}</h6>
+                            <h6><strong>Height:</strong> {height}</h6>
+                            <h6><strong>Weight:</strong> {weight} lbs</h6>
                         </div>
                         <div className="player-stats">
                             <div className="player-stats-column">
-                                <Tooltip text="Points per game"><p>PTS: {data.pts.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Assists per game"><p>AST: {data.ast.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Rebounds per game"><p>REB: {data.reb.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Points per game"><p>PTS: {pts.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Assists per game"><p>AST: {ast.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Rebounds per game"><p>REB: {reb.toFixed(1)}</p></Tooltip>
                             </div>
                             <div className="player-stats-column">
-                                <Tooltip text="Blocks per game"><p>BLK: {data.blk.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Steals per game"><p>STL: {data.stl.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Turnovers per game"><p>TOV: {data.tov.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Blocks per game"><p>BLK: {blk.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Steals per game"><p>STL: {stl.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Turnovers per game"><p>TOV: {tov.toFixed(1)}</p></Tooltip>
                             </div>
                             <div className="player-stats-column">
-                                <Tooltip text="Average field goal percentage"><p>FG%: {data.fg_pct.toFixed(1)}%</p></Tooltip>
-                                <Tooltip text="Average 3-point percentage"><p>3P%: {data.fg3_pct.toFixed(1)}%</p></Tooltip>
+                                <Tooltip text="Average field goal percentage"><p>FG%: {fg_pct.toFixed(1)}%</p></Tooltip>
+                                <Tooltip text="Average 3-point percentage"><p>3P%: {fg3_pct.toFixed(1)}%</p></Tooltip>
                             </div>
                             </div>
                     </div>
@@ -142,8 +152,6 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="3pt_pct">3pt %</option>
                     </select>
                     <canvas ref={canvasRef} width={800} height={450} id="canvas" />
-                </div>
-                <div className="">
                 </div>
             </div>
         </div>
