@@ -81,7 +81,7 @@ def getPlayer(player_id: int):
     })
 
 @app.get("/player/{player_id}/games")
-def getPlayerPoints(player_id: int):
+def getPlayerGameStats(player_id: int):
     try:
         stats = getPlayerGameLog(player_id)
     except Exception as e:
@@ -92,7 +92,14 @@ def getPlayerPoints(player_id: int):
     for _, row in stats.iterrows():
         playerStats.append({
             "date": row["GAME_DATE"],
-            "points": row["PTS"]
+            "points": row["PTS"],
+            "assists": row["AST"],
+            "rebounds": row["REB"],
+            "blocks": row["BLK"],
+            "steals": row["STL"],
+            "turnovers": row["TOV"],
+            "fg_pct": row["FG_PCT"] * 100,
+            "3pt_pct": row["FG3_PCT"] * 100
         })
     
     return playerStats

@@ -9,13 +9,66 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const canvasRef = useRef(null);
     
 
-    const getPoints = async (id) => {
-        setPlayerStats((await getPlayerGameData(id)).reverse());
-    }
-
     useEffect(() => {
-        getPoints(data.id);
+        async function load() {
+            const stats = await getPlayerGameData(data.id)
+            setPlayerStats(stats)
+        }
+        
+        load()
     }, [data.id])
+    
+    useEffect(() => {
+        const stats = playerStats.map(game => game[graphOption]);
+        const dates = playerStats.map(game => game.date);
+
+        const canvas = canvasRef.current
+        const context = canvas.getContext("2d")
+
+        const containerHeight = canvas.height;
+        const containerWidth = canvas.width;
+        context.clearRect(0, 0, containerWidth, containerHeight)
+
+        const margin = { top: 20, bottom: 40, left: 40, right: 20 };
+        const height = containerHeight - margin.top - margin.bottom;
+        const width = containerWidth - margin.left - margin.right;
+        const xScale = width / (playerStats.length - 1)
+        
+        const maxY = Math.max(...stats);
+        const yScale = height / maxY;
+
+        context.save()
+        context.translate(margin.left, margin.top)
+
+        context.beginPath();
+        context.moveTo(0, 0);
+        context.lineTo(0, height);
+        context.lineTo(width, height);
+        context.stroke();
+        context.closePath();
+        
+        let lastX = 0;
+        let lastY = 0;
+        context.beginPath();
+        stats.forEach((stat, index) => {
+            const x = xScale * index;
+            const y = height - (stat * yScale)
+            if (index === 0) {
+                context.moveTo(lastX, y);
+            } else {
+                context.moveTo(lastX, lastY);
+            }
+            context.lineTo(x, y);
+            lastX = x;
+            lastY = y;
+        });
+        context.strokeStyle = "#007bff";
+        context.lineWidth = 2;
+        context.stroke();
+    
+
+        context.restore();
+    }, [playerStats, graphOption])
 
     return (
         <div className="modal">
@@ -51,7 +104,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                             </div>
                     </div>
                     </div>
-                <canvas id="canvas"></canvas>
+                <div className="chart-wrapper">
+                    <canvas ref={canvasRef} width={800} height={450} id="canvas" />
+                </div>
             </div>
         </div>
     )
