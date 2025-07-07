@@ -566,7 +566,7 @@ select:focus, input:focus {
 .graph-select {
   width: fit-content;
   height: 60px;
-  margin: 10px auto;
+  margin-top: 18px;
   background-color: rgba(240, 248, 255, 0);
   text-align: center;
   color: var(--primary-color);
@@ -576,7 +576,7 @@ select:focus, input:focus {
   -moz-border-radius: 100px;
   -ms-border-radius: 100px;
   -o-border-radius: 100px;
-  font-size: 50px;
+  font-size: 40px;
 }
 
 .graph-select:focus {
