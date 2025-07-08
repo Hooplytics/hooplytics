@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from "react"
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
 import { getPlayerGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
@@ -7,15 +9,53 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
     const [graphOption, setGraphOption] = useState("points");
-    const [playerStats, setPlayerStats] = useState([]);
+    const [playerStats, setPlayerStats] = useState([]); // does not change
+    const [gameDates, setGameDates] = useState([])
+    const [filterOption, setFilterOption] = useState("recency") // recency vs grouping
+    const [filterItem, setFilterItem] = useState("season") // which timeline to group or filter by
+
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+
     const canvasRef = useRef(null);
 
     const MARGIN_TR = 20; // margin for top and right
     const MARGIN_BL = 40; // margin for bottom and left
 
+    const filterRecency = () => {
+        const today = new Date(gameDates[gameDates.length - 1]);
+        let lastDate;
+        let filteredDates;
+        if (filterItem === "season") {
+            filteredDates = gameDates;
+        } else if (filterItem === "week") {
+            lastDate = new Date(today.getTime() - (6 * 24 * 60 * 60 * 1000));
+            setStartDate(lastDate);
+            setEndDate(today);
+            filteredDates = gameDates.filter(date => {
+                return date >= lastDate && date <= today;
+            });
+        } else if (filterItem === "month") {
+            lastDate = new Date(today.getTime() - (4 * 7 * 24 * 60 * 60 * 1000));
+            setStartDate(lastDate);
+            setEndDate(today);
+            filteredDates = gameDates.filter(date => {
+                return date > lastDate && date <= today;
+            });
+        } else {
+            filteredDates = gameDates.filter(date => {
+                return date >= startDate && date <= endDate;
+            })
+        }
+
+        return playerStats.slice(0, filteredDates.length).reverse().map(game => game[graphOption]);
+    }
+
     const createGraph = () => {
-        const stats = playerStats.map(game => game[graphOption]);
-        const dates = playerStats.map(game => game.date);
+        let stats;
+        if (filterOption === "recency") {
+            stats = filterRecency();
+        }
 
         const canvas = canvasRef.current
         const context = canvas.getContext("2d")
@@ -26,7 +66,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
 
         const height = containerHeight - MARGIN_TR - MARGIN_BL;
         const width = containerWidth - MARGIN_TR - MARGIN_BL;
-        const xScale = width / (playerStats.length - 1)
+        const xScale = width / (stats.length - 1)
         
         const maxY = Math.max(...stats);
         const yScale = height / maxY;
@@ -62,45 +102,85 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         context.lineWidth = 2;
         context.stroke();
 
+        context.beginPath();
+        let statAverage;
+        switch (graphOption) {
+            case "points":
+                statAverage = pts;
+                break;
+            case "assists":
+                statAverage = ast;
+                break;
+            case "rebounds":
+                statAverage = reb;
+                break;
+            case "blocks":
+                statAverage = blk;
+                break;
+            case "steals":
+                statAverage = stl;
+                break;
+            case "turnovers":
+                statAverage = tov;
+                break;
+            case "fg_pct":
+                statAverage = fg_pct;
+                break;
+            case "3pt_pct":
+                statAverage = fg3_pct;
+                break;
+        }
+        context.moveTo(0, height - (statAverage * yScale));
+        context.lineTo(width, height - (statAverage * yScale));
+        context.strokeStyle = "#FF0000";
+        context.lineWidth = 2;
+        context.stroke();
+
         context.font = "16px Arial";
         context.fillStyle = "white";
         context.fillText(0, -25, height + 5);
 
         context.font = "16px Arial";
         context.fillStyle = "white";
-        context.fillText(Math.round(maxY / 4), -25, (height / 4) * 3);
+        context.fillText((maxY / 4).toFixed(1), -37, (height / 4) * 3 + 5);
 
         context.font = "16px Arial";
         context.fillStyle = "white";
-        context.fillText(Math.round(maxY / 2), -25, (height / 4) * 2);
+        context.fillText((maxY / 2).toFixed(1), -37, (height / 4) * 2 + 5);
 
         context.font = "16px Arial";
         context.fillStyle = "white";
-        context.fillText(Math.round(maxY / 4 * 3), -25, height / 4);
+        context.fillText((maxY / 4 * 3).toFixed(1), -37, height / 4 + 5);
 
         context.font = "16px Arial";
         context.fillStyle = "white";
-        context.fillText(maxY, -25, 10);
+        context.fillText(maxY.toFixed(1), -37, 10);
     
 
         context.restore();
     }
     
-
     useEffect(() => {
         async function load() {
             const stats = await getPlayerGameData(id)
             setPlayerStats(stats)
         }
-        
-        load()
+        load();
     }, [id])
+
+    useEffect(() => {
+        setGameDates(playerStats.map(game => new Date(game.date)).reverse());
+    }, [playerStats])
+
+    useEffect(() => {
+        setStartDate(gameDates[0]);
+        setEndDate(gameDates[gameDates.length - 1]);
+    }, [gameDates])
 
     
     useEffect(() => {
         createGraph();
-        console.log(playerStats);
-    }, [playerStats, graphOption])
+    }, [playerStats, graphOption, filterItem, filterOption, startDate, endDate])
 
     return (
         <div className="modal">
@@ -152,6 +232,35 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="3pt_pct">3pt %</option>
                     </select>
                     <canvas ref={canvasRef} width={800} height={450} id="canvas" />
+                </div>
+                <div className="graph-filter-by">
+                    <select className="filter" onChange={(e) => {
+                        e.preventDefault();
+                        setFilterOption(e.target.value)
+                    }}>
+                        <option default value="recency">Recency</option>
+                        <option value="grouping">Grouping</option>
+                    </select>
+                    <select className="filter" onChange={(e) => {
+                            e.preventDefault();
+                            setFilterItem(e.target.value)
+                        }}>
+                        <option default value="season">Season</option>
+                        <option value="month">Month</option>
+                        <option value="week">Week</option>
+                        {filterOption  === "recency" && <option value="custom">Custom</option>}
+                    </select>
+                    {filterOption === "recency" && filterItem === "custom" && <div className="custom-dates">
+                        <span>
+                            <p>Start Date: </p>
+                            <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} placeholderText="Select a start date" minDate={gameDates[0]} maxDate={gameDates[gameDates.length - 1]} dateFormat="MMMM dd, yyyy"/>
+                        </span>
+                        <span>
+                            <p>End Date: </p>
+                            <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} placeholderText="Select a end date" minDate={startDate || gameDates[0]} maxDate={gameDates[gameDates.length - 1]} dateFormat="MMMM dd, yyyy" />
+                        </span>
+                    </div>
+                    }
                 </div>
             </div>
         </div>
