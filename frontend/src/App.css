@@ -634,3 +634,58 @@ select:focus, input:focus {
   border-style: solid;
   border-color: transparent black transparent transparent;
 }
+
+.graph-filter-by {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  position: absolute;
+  align-items: center;
+  top: 60%;
+  left: 10%;
+  gap: 30px;
+}
+
+.filter {
+  width: 105px;
+  height: 30px;
+  background-color: rgba(240, 248, 255, 0);
+  text-align: center;
+  color: var(--primary-color);
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -moz-border-radius: 100px;
+  -ms-border-radius: 100px;
+  -o-border-radius: 100px;
+  font-size: 20px;
+}
+
+.custom-dates {
+  top: 80%;
+  left: 10%;
+}
+
+span {
+  display: flex;
+  flex-direction: column;
+  width: 150px;
+  align-items: center;
+}
+
+span p {
+  font-family: "Arial";
+  margin-bottom: 5px;
+}
+
+.react-datepicker__input-container input {
+  width: 150px;
+  background-color: #22222294;       
+  color: var(--primary-color);            
+  border: 0px solid #555;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  font-size: 15px;
+  text-align: center;
+}
