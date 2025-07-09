@@ -641,13 +641,13 @@ select:focus, input:focus {
   width: fit-content;
   position: absolute;
   align-items: center;
-  top: 60%;
-  left: 10%;
+  top: 53%;
+  left: 7%;
   gap: 30px;
 }
 
 .filter {
-  width: 105px;
+  width: 140px;
   height: 30px;
   background-color: rgba(240, 248, 255, 0);
   text-align: center;

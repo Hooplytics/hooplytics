@@ -47,9 +47,13 @@ export async function fetchTeamById(id) {
     }
 }
 
-export async function getPlayerGameData(id) {
+export async function getPlayerGameData(id, startDate, endDate) {
     try {
-        const resp = await fetch(`${import.meta.env.VITE_WEB_URL}player/${id}/games`);
+        const sd = new Date(startDate).toLocaleDateString("en-US");
+        const ed = new Date(endDate).toLocaleDateString("en-US");
+
+        const url = `${import.meta.env.VITE_WEB_URL}player/${id}/games?startDate=${encodeURIComponent(sd)}&endDate=${encodeURIComponent(ed)}`;
+        const resp = await fetch(url);
         if (!resp.ok) {
             throw new Error(`Cannot access player game log`)
         }
