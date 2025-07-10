@@ -30,10 +30,12 @@ def getFullTeamStats():
         how="outer"
     )
 
-def getPlayerGameLog(id):
+def getPlayerGameLog(id, startDate, endDate):
     return playergamelog.PlayerGameLog(
         season=currSeason,
         player_id=id,
+        date_from_nullable = startDate,
+        date_to_nullable = endDate
     ).get_data_frames()[0]
 
 def getTeamGameLog(id):

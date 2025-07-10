@@ -81,9 +81,9 @@ def getPlayer(player_id: int):
     })
 
 @app.get("/player/{player_id}/games")
-def getPlayerGameStats(player_id: int):
+def getPlayerGameStats(player_id: int, startDate: str, endDate: str):
     try:
-        stats = getPlayerGameLog(player_id)
+        stats = getPlayerGameLog(player_id, startDate, endDate)
     except Exception as e:
         print(f'Error fetching player games: {e}')
     print(stats)
