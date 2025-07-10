@@ -40,8 +40,78 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         }
     }
 
-    const createGraph = () => {
+    const monthlyGranularity = () => {
         const stats = playerStats.map(game => game[graphOption]);
+        const dates = playerStats.map(game => new Date(game.date));
+
+        const granulatedStats = [];
+        let currMonthStats = 0;
+        let currMonthGames = 0;
+
+        let currMonth = firstGame.getMonth();
+        let currYear = firstGame.getFullYear();
+
+        let startMonth = new Date(currYear, currMonth, 1);
+        let endMonth = new Date(currYear, currMonth + 1, 0);
+        
+        for (let i = 0; i < stats.length; ++i) {
+            if (dates[i] >= startMonth && dates[i] <= endMonth) {
+                currMonthStats += stats[i];
+                ++currMonthGames;
+            }
+            if (i === stats.length - 1 || dates[i + 1] > endMonth) {
+                granulatedStats.push(currMonthStats / currMonthGames);
+                currMonthGames = 0;
+                currMonthStats = 0;
+            } 
+            if (i !== stats.length - 1) {
+                currMonth = dates[i + 1].getMonth();
+                currYear = dates[i + 1].getFullYear();
+                startMonth = new Date(currYear, currMonth, 1);
+                endMonth = new Date(currYear, currMonth + 1, 0);
+            }
+        }
+        return granulatedStats;
+    }
+
+    const weeklyGranularity = () => {
+        const stats = playerStats.map(game => game[graphOption]);
+        const dates = playerStats.map(game => new Date(game.date));
+
+        const granulatedStats = [];
+        let currWeekStats = 0;
+        let currWeekGames = 0;
+
+        let startWeek = firstGame;
+        let endWeek = new Date(startWeek.getTime() + (6 * 24 * 60 * 60 * 1000));
+        
+        for (let i = 0; i < stats.length; ++i) {
+            if (dates[i] >= startWeek && dates[i] <= endWeek) {
+                currWeekStats += stats[i];
+                ++currWeekGames;
+            }
+            if (i === stats.length - 1 || dates[i + 1] > endWeek) {
+                granulatedStats.push(currWeekStats / currWeekGames);
+                currWeekGames = 0;
+                currWeekStats = 0;
+            }
+            if (i !== stats.length - 1 && dates[i + 1] >= endWeek) {
+                do {
+                    startWeek = new Date(endWeek.getTime() + (24 * 60 * 60 * 1000));
+                    endWeek = new Date(startWeek.getTime() + (6 * 24 * 60 * 60 * 1000));
+                } while (dates[i + 1] > endWeek);
+            }
+        }
+        return granulatedStats;
+    }
+
+    const createGraph = () => {
+        let stats;
+        if (filterOption === "recency") {
+            stats = playerStats.map(game => game[graphOption]);
+        } else {
+            stats = filterItem === "week" ? weeklyGranularity() : monthlyGranularity();
+        }
 
         const canvas = canvasRef.current
         const context = canvas.getContext("2d")
@@ -125,21 +195,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         context.font = "16px Arial";
         context.fillStyle = "white";
         context.fillText(0, -25, height + 5);
-
-        context.font = "16px Arial";
-        context.fillStyle = "white";
         context.fillText((maxY / 4).toFixed(1), -37, (height / 4) * 3 + 5);
-
-        context.font = "16px Arial";
-        context.fillStyle = "white";
         context.fillText((maxY / 2).toFixed(1), -37, (height / 4) * 2 + 5);
-
-        context.font = "16px Arial";
-        context.fillStyle = "white";
         context.fillText((maxY / 4 * 3).toFixed(1), -37, height / 4 + 5);
-
-        context.font = "16px Arial";
-        context.fillStyle = "white";
         context.fillText(maxY.toFixed(1), -37, 10);
     
         context.restore();
@@ -154,7 +212,6 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
             setStartDate(dates[0]);
             setEndDate(dates[dates.length - 1]);
         }
-
         setDates();
     }, [id])
     
@@ -168,11 +225,11 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     
     useEffect(() => {
         createGraph();
-    }, [playerStats, graphOption])
+    }, [playerStats, graphOption, filterOption, filterItem])
 
     useEffect(() => {
-        filterRecency();
-    }, [filterItem])
+        filterOption === "recency" ? filterRecency(): undefined;
+    }, [filterItem, filterOption])
 
     return (
         <div className="modal">
@@ -228,10 +285,14 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                 <div className="graph-filter-by">
                     <select className="filter" onChange={(e) => {
                         e.preventDefault();
-                        setFilterOption(e.target.value)
+                        setFilterOption(e.target.value);
+                        if (e.target.value === "granularity") {
+                            setStartDate(firstGame);
+                            setEndDate(lastGame);
+                        }
                     }}>
                         <option default value="recency">Recency</option>
-                        <option value="granularity">Granularity</option>
+                        <option value="granularity" >Granularity</option>
                     </select>
                     <select className="filter" onChange={(e) => {
                             e.preventDefault();
@@ -241,7 +302,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="month">{ filterOption === "recency" ? "Last Month" : "Monthly" }</option>
                         <option value="week">{ filterOption === "recency" ? "Last Week" : "Weekly" }</option>
                     </select>
-                    {startDate && endDate && <div className="custom-dates">
+                    {startDate && endDate && filterOption === "recency" && <div className="custom-dates">
                         <span>
                             <p>Start Date: </p>
                             <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} placeholderText="Select a start date" minDate={firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy"/>
