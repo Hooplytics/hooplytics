@@ -1,3 +1,11 @@
+const MARGIN_TR = 20; // margin for top and right
+const MARGIN_BL = 40; // margin for bottom and left
+const MILLISECONDS_IN_A_SECOND = 1000;
+const SECS_IN_A_HR = 3600;
+const HRS_IN_A_DAY = 24;
+const DAYS_IN_A_WEEK = 7;
+const WEEKS_IN_A_MONTH = 4;
+
 export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, setEndDate) => {
         const today = lastGame;
         let lastDate;
@@ -5,11 +13,11 @@ export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, set
             setStartDate(firstGame);
             setEndDate(lastGame);
         } else if (filterItem === "week") {
-            lastDate = new Date(today.getTime() - (6 * 24 * 60 * 60 * 1000));
+            lastDate = new Date(today.getTime() - ((DAYS_IN_A_WEEK - 1) * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
             setStartDate(lastDate);
             setEndDate(today);
         } else if (filterItem === "month") {
-            lastDate = new Date(today.getTime() - (4 * 7 * 24 * 60 * 60 * 1000));
+            lastDate = new Date(today.getTime() - (WEEKS_IN_A_MONTH * DAYS_IN_A_WEEK * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
             setStartDate(lastDate);
             setEndDate(today);
         }
@@ -18,7 +26,7 @@ export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, set
 const granularityInitialPeriods = (filterItem, firstGame) => {
         switch (filterItem) {
             case "week":
-                return [firstGame, new Date(firstGame.getTime() + (6 * 24 * 60 * 60 * 1000))];
+                return [firstGame, new Date(firstGame.getTime() + ((DAYS_IN_A_WEEK - 1) * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND))];
             case "month":
                 return [new Date(firstGame.getFullYear(), firstGame.getMonth(), 1), new Date(firstGame.getFullYear(), firstGame.getMonth() + 1, 0)];
             default:
@@ -30,8 +38,8 @@ const granularityPeriodUpdates = (dates, i, start, end, filterItem) => {
         switch (filterItem) {
             case "week":
                 while (dates[i + 1] > end){
-                    start = new Date(end.getTime() + (24 * 60 * 60 * 1000));
-                    end = new Date(start.getTime() + (6 * 24 * 60 * 60 * 1000));
+                    start = new Date(end.getTime() + (HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
+                    end = new Date(start.getTime() + ((DAYS_IN_A_WEEK - 1) * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
                 };
                 return [start, end];
             case "month":
@@ -65,10 +73,9 @@ const granularity = (playerStats, graphOption, filterItem, firstGame) => {
             }
         }
         return granulatedStats;
-    }
+}
+    
 
-const MARGIN_TR = 20; // margin for top and right
-const MARGIN_BL = 40; // margin for bottom and left
 
 export const createGraph = (canvasRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
         const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame);
