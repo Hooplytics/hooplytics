@@ -1,4 +1,4 @@
-from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog
+from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog, getTeamGameLog
 from stats import additionalPlayerInfo
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -204,3 +204,27 @@ def getTeam(teamid: int):
         "opp_tov": float(matched["OPP_TOV"]),   "opp_tov_rank":  int(matched["OPP_TOV_RANK"]),
         "logo_url": f"https://cdn.nba.com/logos/nba/{teamid}/global/L/logo.svg",
     })
+
+@app.get("/team/{team_id}/games")
+def getTeamGameStats(team_id: int, startDate: str, endDate: str):
+    try:
+        stats = getTeamGameLog(team_id, startDate, endDate)
+    except Exception as e:
+        print(f'Error fetching team games: {e}')
+    print(stats)
+
+    teamStats = []
+    for _, row in stats.iterrows():
+        teamStats.append({
+            "date": row["GAME_DATE"],
+            "points": row["PTS"],
+            "assists": row["AST"],
+            "rebounds": row["REB"],
+            "blocks": row["BLK"],
+            "steals": row["STL"],
+            "turnovers": row["TOV"],
+            "fg_pct": row["FG_PCT"] * 100,
+            "3pt_pct": row["FG3_PCT"] * 100
+        })
+    
+    return teamStats

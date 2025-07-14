@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, use } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
@@ -9,35 +9,34 @@ import { filterRecency, createGraph } from "../utils/chart";
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
+    const earliestPossibleStart = new Date("2024-10-15");
+    const latestPossibleEnd = new Date("2025-04-15");
+    const today = new Date();
+
     const [graphOption, setGraphOption] = useState("points");
     const [playerStats, setPlayerStats] = useState([]);
     const [filterOption, setFilterOption] = useState("recency") // recency vs grouping
-    const [filterItem, setFilterItem] = useState("season") // which timeline to group or filter by
+    const [filterItem, setFilterItem] = useState("month") // which timeline to group or filter by
 
-    const [startDate, setStartDate] = useState(new Date("2024-10-02")); // the beginning date for the range to query
-    const [endDate, setEndDate] = useState(new Date("2025-07-01")); // the ending date for the range to query
-    const [firstGame, setFirstGame] = useState(new Date("2024-10-02")); // the date of the first game
-    const [lastGame, setLastGame] = useState(new Date("2025-07-01")); //  the date of the last game
+    const [startDate, setStartDate] = useState(); // the beginning date for the range to query
+    const [endDate, setEndDate] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); // the ending date for the range to query
+    const [firstGame, setFirstGame] = useState(earliestPossibleStart); // the date of the first game
+    const [lastGame, setLastGame] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); //  the date of the last game
+    const [foundFirst, setFoundFirst] = useState(false);
+    const [foundLast, setFoundLast] = useState(false);
 
     const canvasRef = useRef(null);
 
     useEffect(() => {
-        const setDates = async () => {
-            const stats = await getPlayerGameData(id, startDate, endDate);
-            const dates = stats.reverse().map(game => new Date(game.date));
-            setFirstGame(dates[0]);
-            setLastGame(dates[dates.length - 1]);
-            setStartDate(dates[0]);
-            setEndDate(dates[dates.length - 1]);
-        }
-        setDates();
-    }, [id])
+        filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
+    }, [id, filterItem, filterOption])
     
     useEffect(() => {
         const loadStats = async () => {
             const stats = await getPlayerGameData(id, startDate, endDate);
             setPlayerStats(stats.reverse());
         }
+        if (!startDate) return;
         loadStats();
     }, [startDate, endDate])
     
@@ -46,8 +45,17 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [playerStats, graphOption, filterOption, filterItem])
 
     useEffect(() => {
-        filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
-    }, [filterItem, filterOption])
+        if (!foundFirst && (filterOption === "granularity" || filterItem === "season")) {
+            setFoundFirst(true);
+            setFirstGame(new Date(playerStats[0].date));
+            setStartDate(new Date(playerStats[0].date));
+        }
+        if (!foundLast && (filterOption === "granularity" || filterItem === "season")) {
+            setFoundLast(true);
+            setLastGame(new Date(playerStats[playerStats.length - 1].date));
+            setEndDate(new Date(playerStats[playerStats.length - 1].date));
+        }
+    }, [playerStats])
 
     return (
         <div className="modal">
@@ -84,7 +92,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     </div>
                     </div>
                 <div className="chart-wrapper">
-                    <select className="graph-select"onChange={(e) => {
+                    <select className="graph-select" onChange={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setGraphOption(e.target.value);
@@ -113,11 +121,11 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option default value="recency">Recency</option>
                         <option value="granularity" >Granularity</option>
                     </select>
-                    <select className="filter" onChange={(e) => {
+                    <select className="filter" value={filterItem} onChange={(e) => {
                             e.preventDefault();
                             setFilterItem(e.target.value);
                         }}>
-                        {filterOption === "recency" && <option default value="season">Full Season</option>}
+                        {filterOption === "recency" && <option value="season">Full Season</option>}
                         <option value="month">{ filterOption === "recency" ? "Last Month" : "Monthly" }</option>
                         <option value="week">{ filterOption === "recency" ? "Last Week" : "Weekly" }</option>
                     </select>
