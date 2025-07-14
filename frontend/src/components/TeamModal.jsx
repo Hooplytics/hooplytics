@@ -7,7 +7,7 @@ import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph } from "../utils/chart";
 
 export function TeamModal({ onClose, data, isFav, toggleFav }) {
-    const { id, logo_url, name, record, pts, ast, reb, oreb, blk, stl, tov, fg_pct, fg3_pct, oppg, opp_reb, opp_oreb, opp_tov, opp_fg_pct, opp_fg3_pct} = data;
+    const { id, logo_url, name, record, pts, pts_rank, ast, ast_rank, reb, reb_rank, oreb, oreb_rank, blk, blk_rank, stl, stl_rank, tov, tov_rank, fg_pct, fg_pct_rank, fg3_pct, fg3_pct_rank, oppg, oppg_rank, opp_reb, opp_reb_rank, opp_oreb, opp_oreb_rank, opp_tov, opp_tov_rank, opp_fg_pct, opp_fg_pct_rank, opp_fg3_pct, opp_fg3_pct_rank} = data;
 
     const earliestPossibleStart = new Date("2024-10-15");
     const latestPossibleEnd = new Date("2025-04-15");
@@ -79,32 +79,32 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
                     <div className="team-header">
                         <img src={logo_url} />
                     <div className="team-info">
-                        <h3>{data?.name} ({record})</h3>
+                        <h3>{name} ({record})</h3>
                             <div className="team-stats">
                                 <div className="team-stats-column">
-                                    <Tooltip text="Points per game | League rank"><p>PTS: {pts.toFixed(1)} | {formatRank(data?.pts_rank)}</p></Tooltip>
-                                    <Tooltip text="Assists per game | League rank"><p>AST: {ast.toFixed(1)} | {formatRank(data?.ast_rank)}</p></Tooltip>
-                                    <Tooltip text="Rebounds per game | League rank"><p>REB: {reb.toFixed(1)} | {formatRank(data?.reb_rank)}</p></Tooltip>
-                                    <Tooltip text="Offensive rebounds per game | League rank"><p>OREB: {oreb.toFixed(1)} | {formatRank(data?.oreb_rank)}</p></Tooltip>
+                                    <Tooltip text="Points per game | League rank"><p>PTS: {pts.toFixed(1)} | {formatRank(pts_rank)}</p></Tooltip>
+                                    <Tooltip text="Assists per game | League rank"><p>AST: {ast.toFixed(1)} | {formatRank(ast_rank)}</p></Tooltip>
+                                    <Tooltip text="Rebounds per game | League rank"><p>REB: {reb.toFixed(1)} | {formatRank(reb_rank)}</p></Tooltip>
+                                    <Tooltip text="Offensive rebounds per game | League rank"><p>OREB: {oreb.toFixed(1)} | {formatRank(oreb_rank)}</p></Tooltip>
                                 </div>
                                 <div className="team-stats-column">
-                                    <Tooltip text="Blocks per game | League rank"><p>BLK: {blk.toFixed(1)} | {formatRank(data?.blk_rank)}</p></Tooltip>
-                                    <Tooltip text="Steals per game | League rank"><p>STL: {stl.toFixed(1)} | {formatRank(data?.stl_rank)}</p></Tooltip>
-                                    <Tooltip text="Turnovers per game | League rank"><p>TOV: {tov.toFixed(1)} | {formatRank(data?.tov_rank)}</p></Tooltip>
+                                    <Tooltip text="Blocks per game | League rank"><p>BLK: {blk.toFixed(1)} | {formatRank(blk_rank)}</p></Tooltip>
+                                    <Tooltip text="Steals per game | League rank"><p>STL: {stl.toFixed(1)} | {formatRank(stl_rank)}</p></Tooltip>
+                                    <Tooltip text="Turnovers per game | League rank"><p>TOV: {tov.toFixed(1)} | {formatRank(tov_rank)}</p></Tooltip>
                                 </div>
                                 <div className="team-stats-column">
-                                    <Tooltip text="Field goal percentage | League rank"><p>FG%: {fg_pct.toFixed(1)}% | {formatRank(data?.fg_pct_rank)}</p></Tooltip>
-                                    <Tooltip text="3-point percentage | League rank"><p>3P%: {fg3_pct.toFixed(1)}% | {formatRank(data?.fg3_pct_rank)}</p></Tooltip>
+                                    <Tooltip text="Field goal percentage | League rank"><p>FG%: {fg_pct.toFixed(1)}% | {formatRank(fg_pct_rank)}</p></Tooltip>
+                                    <Tooltip text="3-point percentage | League rank"><p>3P%: {fg3_pct.toFixed(1)}% | {formatRank(fg3_pct_rank)}</p></Tooltip>
                                 </div>
                                 <div className="team-stats-column">
-                                    <Tooltip text="Opponent points per game | League rank"><p>OPP PTS: {oppg.toFixed(1)} | {formatRank(data?.oppg_rank)}</p></Tooltip>
-                                    <Tooltip text="Opponent rebounds per game | League rank"><p>OPP REB: {opp_reb.toFixed(1)} | {formatRank(data?.opp_reb_rank)}</p></Tooltip>
-                                    <Tooltip text="Opponent offensive rebounds per game | League rank"><p>OPP OREB: {opp_oreb.toFixed(1)} | {formatRank(data?.opp_oreb_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent points per game | League rank"><p>OPP PTS: {oppg.toFixed(1)} | {formatRank(oppg_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent rebounds per game | League rank"><p>OPP REB: {opp_reb.toFixed(1)} | {formatRank(opp_reb_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent offensive rebounds per game | League rank"><p>OPP OREB: {opp_oreb.toFixed(1)} | {formatRank(opp_oreb_rank)}</p></Tooltip>
                                 </div>
                                 <div className="team-stats-column">
-                                    <Tooltip text="Opponent turnovers per game | League rank"><p>OPP TOV: {opp_tov.toFixed(1)} | {formatRank(data?.opp_tov_rank)}</p></Tooltip>
-                                    <Tooltip text="Opponent average field goal percentage | League rank"><p>OPP FG%: {opp_fg_pct.toFixed(1)}% | {formatRank(data?.opp_fg_pct_rank)}</p></Tooltip>
-                                    <Tooltip text="Opponent average 3-point percentage | League rank"><p>OPP 3P%: {opp_fg3_pct.toFixed(1)}% | {formatRank(data?.opp_fg3_pct_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent turnovers per game | League rank"><p>OPP TOV: {opp_tov.toFixed(1)} | {formatRank(opp_tov_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent average field goal percentage | League rank"><p>OPP FG%: {opp_fg_pct.toFixed(1)}% | {formatRank(opp_fg_pct_rank)}</p></Tooltip>
+                                    <Tooltip text="Opponent average 3-point percentage | League rank"><p>OPP 3P%: {opp_fg3_pct.toFixed(1)}% | {formatRank(opp_fg3_pct_rank)}</p></Tooltip>
                                 </div>
                             </div>
                         </div>
