@@ -1,13 +1,12 @@
-from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog, getTeamGameLog, additionalPlayerInfo
-from fastapi import FastAPI, HTTPException, Query
+from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
+from helpers import fetchCache, upsert, queryGames
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from datetime import datetime, timedelta, date, timezone
-from dateutil.relativedelta import relativedelta
 from typing import List, Literal
 from supabase import create_client
 from dotenv import load_dotenv
-import pandas as pd
 
 load_dotenv()
 
@@ -29,7 +28,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 TTL = timedelta(hours=24)
-HARDCODED_ENDDATE = date(2025, 4, 14)
 
 @app.on_event("startup")
 async def startup():
@@ -45,15 +43,7 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
     cutoff = datetime.now(timezone.utc) - TTL
 
     # try fetch from cache
-    resp = sb\
-        .from_("modal_cache")\
-        .select("start_date,end_date,data,last_fetched")\
-        .eq("entity_type", entity_type)\
-        .eq("entity_id", entity_id)\
-        .maybe_single()\
-        .execute()
-    
-    row = resp.data if resp and resp.data else None
+    row = fetchCache(sb, entity_type, entity_id)
     currEnd = endDate
     currStart = startDate
 
@@ -65,47 +55,10 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
     if use_cache:
         games = row["data"]
     else:
-        # fetch from API
-        try:
-            df = getPlayerGameLog(entity_id, startDate.strftime("%m/%d/%Y"), endDate.strftime("%m/%d/%Y")) if entity_type == "player" else getTeamGameLog(entity_id, startDate.strftime("%m/%d/%Y"), endDate.strftime("%m/%d/%Y"))
-        except Exception as e:
-            raise HTTPException(502, f"Upstream fetch failed: {e}")
-        
-        dates = pd.to_datetime(df["GAME_DATE"], format="%b %d, %Y").dt.date
-        actual_end = max(dates.max(), currEnd) if currEnd != HARDCODED_ENDDATE else dates.max()
-        actual_start = min(dates.min(), currStart) if currEnd != HARDCODED_ENDDATE else actual_end - relativedelta(weeks=4)
-
-        games = [{
-            "date":      row["GAME_DATE"],
-            "points":    row["PTS"],
-            "assists":   row["AST"],
-            "rebounds":  row["REB"],
-            "blocks":    row["BLK"],
-            "steals":    row["STL"],
-            "turnovers": row["TOV"],
-            "fg_pct":    row["FG_PCT"] * 100,
-            "3pt_pct":   row["FG3_PCT"] * 100
-        } for _, row in df.iterrows()]
-
-        # upsert into database
-        sb.from_("modal_cache")\
-            .upsert({
-                "entity_type": entity_type,
-                "entity_id":   entity_id,
-                "start_date":  actual_start.isoformat(),
-                "end_date":    actual_end.isoformat(),
-                "data":        games,
-            }, on_conflict="entity_type,entity_id")\
-            .execute()
+        games = upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart)
 
     # get only the games with dates within the query
-    result = []
-    for game in games:
-        gameDate = datetime.strptime(game["date"], "%b %d, %Y").date()
-        if startDate <= gameDate <= endDate:
-            result.append(game)
-
-    return result
+    return queryGames(games, startDate, endDate)
 
 @app.get("/search/players") 
 def getPlayers(player: str):
