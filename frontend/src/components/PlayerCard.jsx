@@ -36,7 +36,7 @@ export function PlayerCard({ data }) {
                 }
                 <img src={data.image_url} />
                 <h5>{data.name} | {data.team}</h5>
-                <p>{data.height} | {data.weight} lbs</p>
+                {(data.height || data.weight) && <p>{data.height} | {data.weight} lbs</p>}
                 <p>{data.position}</p>
             </div>
             {showModal && <PlayerModal data={data} onClose={handleShowModal} isFav={isFav} toggleFav={handleToggle} />}

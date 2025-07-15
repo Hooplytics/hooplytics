@@ -1,9 +1,14 @@
-from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog, getTeamGameLog
-from stats import additionalPlayerInfo
-from fastapi import FastAPI
+from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
+from helpers import fetchCache, upsert, queryGames
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from requests.exceptions import ReadTimeout
+import os
+from datetime import datetime, timedelta, date, timezone
+from typing import List, Literal
+from supabase import create_client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -13,13 +18,49 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-@app.get("/search/players")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
+TTL = timedelta(hours=24)
+
+@app.on_event("startup")
+async def startup():
+    app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+@app.on_event("shutdown")
+async def shutdown():
+    pass
+
+@app.get("/{entity_type}/{entity_id}/games", response_model=List[dict])
+async def getGameData(entity_type: Literal["player", "team"], entity_id: int, startDate: date = Query(..., alias="startDate"), endDate: date = Query(..., alias="endDate")):
+    sb     = app.state.sb
+    cutoff = datetime.now(timezone.utc) - TTL
+
+    currEnd = endDate
+    currStart = startDate
+
+    # try fetch from cache
+    row = await fetchCache(sb, entity_type, entity_id)
+    if row:
+        currStart = date.fromisoformat(row["start_date"])
+        currEnd  = date.fromisoformat(row["end_date"])
+
+    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) >= cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
+    if use_cache:
+        games = row["data"]
+    else:
+        games = await upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart)
+
+    # get only the games with dates within the query
+    return queryGames(games, startDate, endDate)
+
+@app.get("/search/players") 
 def getPlayers(player: str):
     try:
         players = getPlayerSeasonStats()
@@ -79,30 +120,6 @@ def getPlayer(player_id: int):
             "image_url": f'https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png',
             **additionalInfo  
     })
-
-@app.get("/player/{player_id}/games")
-def getPlayerGameStats(player_id: int, startDate: str, endDate: str):
-    try:
-        stats = getPlayerGameLog(player_id, startDate, endDate)
-    except Exception as e:
-        print(f'Error fetching player games: {e}')
-    print(stats)
-
-    playerStats = []
-    for _, row in stats.iterrows():
-        playerStats.append({
-            "date": row["GAME_DATE"],
-            "points": row["PTS"],
-            "assists": row["AST"],
-            "rebounds": row["REB"],
-            "blocks": row["BLK"],
-            "steals": row["STL"],
-            "turnovers": row["TOV"],
-            "fg_pct": row["FG_PCT"] * 100,
-            "3pt_pct": row["FG3_PCT"] * 100
-        })
-    
-    return playerStats
 
 @app.get("/search/teams")
 def getTeams(team: str):
@@ -204,27 +221,3 @@ def getTeam(teamid: int):
         "opp_tov": float(matched["OPP_TOV"]),   "opp_tov_rank":  int(matched["OPP_TOV_RANK"]),
         "logo_url": f"https://cdn.nba.com/logos/nba/{teamid}/global/L/logo.svg",
     })
-
-@app.get("/team/{team_id}/games")
-def getTeamGameStats(team_id: int, startDate: str, endDate: str):
-    try:
-        stats = getTeamGameLog(team_id, startDate, endDate)
-    except Exception as e:
-        print(f'Error fetching team games: {e}')
-    print(stats)
-
-    teamStats = []
-    for _, row in stats.iterrows():
-        teamStats.append({
-            "date": row["GAME_DATE"],
-            "points": row["PTS"],
-            "assists": row["AST"],
-            "rebounds": row["REB"],
-            "blocks": row["BLK"],
-            "steals": row["STL"],
-            "turnovers": row["TOV"],
-            "fg_pct": row["FG_PCT"] * 100,
-            "3pt_pct": row["FG3_PCT"] * 100
-        })
-    
-    return teamStats
