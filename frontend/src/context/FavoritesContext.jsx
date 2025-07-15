@@ -95,7 +95,7 @@ export function FavoritesProvider({ children }) {
             }
         }
         else {
-        // if unfavorited, delete from database
+        // if unfavorited, delete from in-memory data
             delete cacheRef.current[key][id];
             setFavoriteData((prev) => ({...prev, [key]: { ...cacheRef.current[key] }}));
         }
