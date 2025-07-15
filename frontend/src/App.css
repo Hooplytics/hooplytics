@@ -544,9 +544,10 @@ select:focus, input:focus {
 
 .team-stats {
   display: flex;
-  gap: 90px;
   padding-top: 50px;
+  gap: 80px;
   font-size: 17px;
+  width: fit-content;
 }
 
 .team-stats-column {
@@ -554,6 +555,7 @@ select:focus, input:focus {
   flex-direction: column;
   gap: 10px;
   margin: auto;
+  width: fit-content;
 }
 
 .chart-wrapper {
@@ -566,7 +568,6 @@ select:focus, input:focus {
 .graph-select {
   width: fit-content;
   height: 60px;
-  margin-top: 18px;
   background-color: rgba(240, 248, 255, 0);
   text-align: center;
   color: var(--primary-color);

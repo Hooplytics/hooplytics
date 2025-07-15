@@ -62,3 +62,19 @@ export async function getPlayerGameData(id, startDate, endDate) {
         console.error(err);
     }
 }
+
+export async function getTeamGameData(id, startDate, endDate) {
+    try {
+        const sd = new Date(startDate).toLocaleDateString("en-US");
+        const ed = new Date(endDate).toLocaleDateString("en-US");
+
+        const url = `${import.meta.env.VITE_WEB_URL}team/${id}/games?startDate=${encodeURIComponent(sd)}&endDate=${encodeURIComponent(ed)}`;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            throw new Error(`Cannot team player game log`)
+        }
+        return await resp.json();
+    } catch (err) {
+        console.error(err);
+    }
+}

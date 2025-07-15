@@ -38,10 +38,12 @@ def getPlayerGameLog(id, startDate, endDate):
         date_to_nullable = endDate
     ).get_data_frames()[0]
 
-def getTeamGameLog(id):
+def getTeamGameLog(id, startDate, endDate):
     return teamgamelog.TeamGameLog(
         season=currSeason,
         team_id=id,
+        date_from_nullable = startDate,
+        date_to_nullable = endDate
     ).get_data_frames()[0]
 
 def additionalPlayerInfo(player_id):
