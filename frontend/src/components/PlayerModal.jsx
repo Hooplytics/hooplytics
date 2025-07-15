@@ -2,15 +2,15 @@ import { useEffect, useState, useRef, use } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { getPlayerGameData } from "../utils/api"
+import { getGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph } from "../utils/chart";
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
-    const earliestPossibleStart = new Date("2024-10-15");
-    const latestPossibleEnd = new Date("2025-04-15");
+    const earliestPossibleStart = new Date(Date.UTC(2024, 9, 15, 0, 0, 0));
+    const latestPossibleEnd = new Date(Date.UTC(2025, 3, 15, 0, 0, 0));
     const today = new Date();
 
     const [graphOption, setGraphOption] = useState("points");
@@ -33,7 +33,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     
     useEffect(() => {
         const loadStats = async () => {
-            const stats = await getPlayerGameData(id, startDate, endDate);
+            const stats = await getGameData("player", id, startDate, endDate);
             setPlayerStats(stats.reverse());
         }
         if (!startDate) return;
@@ -41,6 +41,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [startDate, endDate])
     
     useEffect(() => {
+        console.log(startDate, endDate)
         createGraph(canvasRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
     }, [playerStats, graphOption, filterOption, filterItem])
 

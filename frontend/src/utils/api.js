@@ -47,31 +47,22 @@ export async function fetchTeamById(id) {
     }
 }
 
-export async function getPlayerGameData(id, startDate, endDate) {
-    try {
-        const sd = new Date(startDate).toLocaleDateString("en-US");
-        const ed = new Date(endDate).toLocaleDateString("en-US");
-
-        const url = `${import.meta.env.VITE_WEB_URL}player/${id}/games?startDate=${encodeURIComponent(sd)}&endDate=${encodeURIComponent(ed)}`;
-        const resp = await fetch(url);
-        if (!resp.ok) {
-            throw new Error(`Cannot access player game log`)
-        }
-        return await resp.json();
-    } catch (err) {
-        console.error(err);
+export async function getGameData(type, id, startDate, endDate) {
+    function formatLocalDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth()+1).padStart(2,'0');
+        const d = String(date.getDate())       .padStart(2,'0');
+        return `${y}-${m}-${d}`;
     }
-}
 
-export async function getTeamGameData(id, startDate, endDate) {
     try {
-        const sd = new Date(startDate).toLocaleDateString("en-US");
-        const ed = new Date(endDate).toLocaleDateString("en-US");
+        const sd = formatLocalDate(startDate);
+        const ed = formatLocalDate(endDate);
 
-        const url = `${import.meta.env.VITE_WEB_URL}team/${id}/games?startDate=${encodeURIComponent(sd)}&endDate=${encodeURIComponent(ed)}`;
+        const url = `${import.meta.env.VITE_WEB_URL}${type}/${id}/games?startDate=${encodeURIComponent(sd)}&endDate=${encodeURIComponent(ed)}`
         const resp = await fetch(url);
         if (!resp.ok) {
-            throw new Error(`Cannot team player game log`)
+            throw new Error(`Cannot access ${type === "player" ? "player" : "team"} game log`)
         }
         return await resp.json();
     } catch (err) {

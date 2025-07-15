@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { getTeamGameData } from "../utils/api"
+import { getGameData } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph } from "../utils/chart";
 
@@ -43,7 +43,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
         
     useEffect(() => {
         const loadStats = async () => {
-            const stats = await getTeamGameData(id, startDate, endDate);
+            const stats = await getGameData("team", id, startDate, endDate);
             setTeamStats(stats.reverse());
         }
         if (!startDate) return;

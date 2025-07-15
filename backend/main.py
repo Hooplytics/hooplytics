@@ -1,9 +1,15 @@
-from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog, getTeamGameLog
-from stats import additionalPlayerInfo
-from fastapi import FastAPI
+from stats import getPlayerSeasonStats, getFullTeamStats, getPlayerGameLog, getTeamGameLog, additionalPlayerInfo
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from requests.exceptions import ReadTimeout
+import os
+from datetime import datetime, timedelta, date, timezone
+from dateutil.relativedelta import relativedelta
+from typing import List, Literal
+from supabase import create_client
+from dotenv import load_dotenv
+import pandas as pd
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -13,13 +19,95 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-@app.get("/search/players")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
+TTL = timedelta(hours=24)
+HARDCODED_ENDDATE = date(2025, 4, 14)
+
+@app.on_event("startup")
+async def startup():
+    app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+@app.on_event("shutdown")
+async def shutdown():
+    pass
+
+@app.get("/{entity_type}/{entity_id}/games", response_model=List[dict])
+async def getGameData(entity_type: Literal["player", "team"], entity_id: int, startDate: date = Query(..., alias="startDate"), endDate: date = Query(..., alias="endDate")):
+    sb     = app.state.sb
+    cutoff = datetime.now(timezone.utc) - TTL
+
+    # try fetch from cache
+    resp = sb\
+        .from_("modal_cache")\
+        .select("start_date,end_date,data,last_fetched")\
+        .eq("entity_type", entity_type)\
+        .eq("entity_id", entity_id)\
+        .maybe_single()\
+        .execute()
+    
+    row = resp.data if resp and resp.data else None
+    currEnd = endDate
+    currStart = startDate
+
+    if row:
+        currStart = date.fromisoformat(row["start_date"])
+        currEnd  = date.fromisoformat(row["end_date"])
+
+    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) >= cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
+    if use_cache:
+        games = row["data"]
+    else:
+        # fetch from API
+        try:
+            df = getPlayerGameLog(entity_id, startDate.strftime("%m/%d/%Y"), endDate.strftime("%m/%d/%Y")) if entity_type == "player" else getTeamGameLog(entity_id, startDate.strftime("%m/%d/%Y"), endDate.strftime("%m/%d/%Y"))
+        except Exception as e:
+            raise HTTPException(502, f"Upstream fetch failed: {e}")
+        
+        dates = pd.to_datetime(df["GAME_DATE"], format="%b %d, %Y").dt.date
+        actual_end = max(dates.max(), currEnd) if currEnd != HARDCODED_ENDDATE else dates.max()
+        actual_start = min(dates.min(), currStart) if currEnd != HARDCODED_ENDDATE else actual_end - relativedelta(weeks=4)
+
+        games = [{
+            "date":      row["GAME_DATE"],
+            "points":    row["PTS"],
+            "assists":   row["AST"],
+            "rebounds":  row["REB"],
+            "blocks":    row["BLK"],
+            "steals":    row["STL"],
+            "turnovers": row["TOV"],
+            "fg_pct":    row["FG_PCT"] * 100,
+            "3pt_pct":   row["FG3_PCT"] * 100
+        } for _, row in df.iterrows()]
+
+        # upsert into database
+        sb.from_("modal_cache")\
+            .upsert({
+                "entity_type": entity_type,
+                "entity_id":   entity_id,
+                "start_date":  actual_start.isoformat(),
+                "end_date":    actual_end.isoformat(),
+                "data":        games,
+            }, on_conflict="entity_type,entity_id")\
+            .execute()
+
+    # get only the games with dates within the query
+    result = []
+    for game in games:
+        gameDate = datetime.strptime(game["date"], "%b %d, %Y").date()
+        if startDate <= gameDate <= endDate:
+            result.append(game)
+
+    return result
+
+@app.get("/search/players") 
 def getPlayers(player: str):
     try:
         players = getPlayerSeasonStats()
@@ -79,30 +167,6 @@ def getPlayer(player_id: int):
             "image_url": f'https://cdn.nba.com/headshots/nba/latest/1040x760/{player_id}.png',
             **additionalInfo  
     })
-
-@app.get("/player/{player_id}/games")
-def getPlayerGameStats(player_id: int, startDate: str, endDate: str):
-    try:
-        stats = getPlayerGameLog(player_id, startDate, endDate)
-    except Exception as e:
-        print(f'Error fetching player games: {e}')
-    print(stats)
-
-    playerStats = []
-    for _, row in stats.iterrows():
-        playerStats.append({
-            "date": row["GAME_DATE"],
-            "points": row["PTS"],
-            "assists": row["AST"],
-            "rebounds": row["REB"],
-            "blocks": row["BLK"],
-            "steals": row["STL"],
-            "turnovers": row["TOV"],
-            "fg_pct": row["FG_PCT"] * 100,
-            "3pt_pct": row["FG3_PCT"] * 100
-        })
-    
-    return playerStats
 
 @app.get("/search/teams")
 def getTeams(team: str):
@@ -204,27 +268,3 @@ def getTeam(teamid: int):
         "opp_tov": float(matched["OPP_TOV"]),   "opp_tov_rank":  int(matched["OPP_TOV_RANK"]),
         "logo_url": f"https://cdn.nba.com/logos/nba/{teamid}/global/L/logo.svg",
     })
-
-@app.get("/team/{team_id}/games")
-def getTeamGameStats(team_id: int, startDate: str, endDate: str):
-    try:
-        stats = getTeamGameLog(team_id, startDate, endDate)
-    except Exception as e:
-        print(f'Error fetching team games: {e}')
-    print(stats)
-
-    teamStats = []
-    for _, row in stats.iterrows():
-        teamStats.append({
-            "date": row["GAME_DATE"],
-            "points": row["PTS"],
-            "assists": row["AST"],
-            "rebounds": row["REB"],
-            "blocks": row["BLK"],
-            "steals": row["STL"],
-            "turnovers": row["TOV"],
-            "fg_pct": row["FG_PCT"] * 100,
-            "3pt_pct": row["FG3_PCT"] * 100
-        })
-    
-    return teamStats
