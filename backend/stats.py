@@ -47,9 +47,30 @@ def getTeamGameLog(id, startDate, endDate):
     ).get_data_frames()[0]
 
 def additionalPlayerInfo(player_id):
-    info_df = commonplayerinfo.CommonPlayerInfo(player_id=player_id).get_data_frames()[0]
+    info_df = commonplayerinfo.CommonPlayerInfo(player_id=player_id) \
+                .get_data_frames()[0]
+
+    rawHeight = info_df["HEIGHT"].iat[0] or ""
+
+    # split if there is a dash
+    if "-" in rawHeight:
+        feet, inches = rawHeight.split("-", 1)
+    # split if there is a space
+    elif " " in rawHeight:
+        parts = rawHeight.split()
+
+        nums = [p for p in parts if p.isdigit()]
+        if len(nums) >= 2:
+            feet, inches = nums[0], nums[1]
+        else:
+            feet, inches = "", ""
+    else:
+        feet, inches = "", ""
+
+    height_formatted = f"{feet}'{inches}\"" if feet and inches else rawHeight
+
     return {
-        "position": info_df["POSITION"].values[0],
-        "height": f'{info_df["HEIGHT"].values[0][0]}\'{info_df["HEIGHT"].values[0][2]}\"',
-        "weight": info_df["WEIGHT"].values[0]
+        "position": info_df["POSITION"].iat[0],
+        "height":   height_formatted,
+        "weight":   info_df["WEIGHT"].iat[0],
     }

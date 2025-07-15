@@ -42,11 +42,11 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
     sb     = app.state.sb
     cutoff = datetime.now(timezone.utc) - TTL
 
-    # try fetch from cache
-    row = fetchCache(sb, entity_type, entity_id)
     currEnd = endDate
     currStart = startDate
 
+    # try fetch from cache
+    row = await fetchCache(sb, entity_type, entity_id)
     if row:
         currStart = date.fromisoformat(row["start_date"])
         currEnd  = date.fromisoformat(row["end_date"])
@@ -55,7 +55,7 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
     if use_cache:
         games = row["data"]
     else:
-        games = upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart)
+        games = await upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart)
 
     # get only the games with dates within the query
     return queryGames(games, startDate, endDate)
