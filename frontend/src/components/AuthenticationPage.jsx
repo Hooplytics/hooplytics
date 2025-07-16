@@ -15,6 +15,12 @@ export function AuthenticationPage() {
     const { signUp, logIn } = UserAuth();
     const navigate = useNavigate();
 
+    const reset = () => {
+        setEmail("");
+        setPassword("");
+        setUsername("");
+    }
+
     const handleSignup = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -57,8 +63,8 @@ export function AuthenticationPage() {
             <div className="authentication-container">
                 <form className="authentication-form" onSubmit={isLogin ? handleLogin : handleSignup}>
                     <div className="authentication-options">
-                        <Link to="/login" onClick={() => {setEmail(""); setPassword("");}} className={isLogin ? "auth active" : "auth"}>Login</Link>
-                        <Link to="/signup" onClick={() => {setEmail(""); setPassword("");}} className={!isLogin ? "auth active" : "auth"}>Signup</Link>
+                        <Link to="/login" onClick={() => reset()} className={isLogin ? "auth active" : "auth"}>Login</Link>
+                        <Link to="/signup" onClick={() => reset()} className={!isLogin ? "auth active" : "auth"}>Signup</Link>
                     </div>
                     <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="Email" required/>
                     {!isLogin && <input onChange={(e) => setUsername(e.target.value)} value={username} placeholder="Username" required/>}

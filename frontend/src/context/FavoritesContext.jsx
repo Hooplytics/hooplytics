@@ -76,7 +76,7 @@ export function FavoritesProvider({ children }) {
 
         getGameData("team", id, seasonStart, seasonEnd).catch(console.error);
         });
-    }, [favorites.players, favorites.teams]);
+    }, [favorites.teams]);
 
     // store full season data for players when favorited
     const toggle = async (id, type) => {

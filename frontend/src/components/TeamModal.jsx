@@ -47,9 +47,6 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
             setTeamStats(stats.reverse());
         }
         if (!startDate) return;
-        if (!foundFirst) {
-
-        }
         loadStats();
     }, [startDate, endDate])
         
@@ -58,12 +55,12 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     }, [teamStats, graphOption, filterOption, filterItem])
     
     useEffect(() => {
-        if (!foundFirst && (filterOption === "granularity" || filterItem === "season")) {
+        if (teamStats &&!foundFirst && (filterOption === "granularity" || filterItem === "season")) {
             setFoundFirst(true);
             setFirstGame(new Date(teamStats[0].date));
             setStartDate(new Date(teamStats[0].date));
         }
-        if (!foundLast && (filterOption === "granularity" || filterItem === "season")) {
+        if (teamStats && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
             setFoundLast(true);
             setLastGame(new Date(teamStats[teamStats.length - 1].date));
             setEndDate(new Date(teamStats[teamStats.length - 1].date));
@@ -73,7 +70,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
-                <div className="modal-content" onClick={(e) => e.stopPropagation}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                     <p className="close-modal" onClick={onClose}>&times;</p>
                     <img className="modal-heart" src={isFav ? "/heart.png" : "empty-heart.png"} onClick={toggleFav} />
                     <div className="team-header">

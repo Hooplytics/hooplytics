@@ -19,8 +19,8 @@ export function TeamCard({data}) {
         try {  
             await toggle(data.id, "team");
         } catch (err) {
-            console.error("Could not toggle favorite:", err);
             setIsFav(prev => !prev);
+            alert(`Could not toggle favorite: ${err}`);
         }
     };
 
