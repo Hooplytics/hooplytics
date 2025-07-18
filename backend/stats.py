@@ -1,4 +1,5 @@
-from nba_api.stats.endpoints import commonplayerinfo, leaguedashplayerstats, leaguedashteamstats, playergamelog, teamgamelog
+from nba_api.stats.endpoints import commonplayerinfo, leaguedashplayerstats, leaguedashteamstats, playergamelog, teamgamelog, commonteamroster
+from nba_api.stats.static import teams
 from functools import lru_cache
 
 currSeason = '2024-25'
