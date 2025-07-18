@@ -55,7 +55,7 @@ def getPlayerFeatureData(player, i, teamOppg):
             **seasonPeriodFeature,
             **positionFeature
         })
-    print(f'Finished feature for player {i+1}: {player["PLAYER_NAME"]}')
+    print(f'Finished feature for player {i+1}: {player["PLAYER_NAME"]}') # keeping this so that when updating raw data we know when we've finished calculating all the features for a player
     return [features, values, dates]
 
 def weighingPredictionData(sb):
@@ -89,7 +89,7 @@ def main():
     # for i, player in players.iterrows():
     #     features, targets, dates = getPlayerFeatureData(player, i, team_opp_pts)
     #     upsertPredictionData(sb, player["PLAYER_ID"], dates, features, targets)
-    #     print(f'Upserted player {player["PLAYER_NAME"]}')
+    #     print(f'Upserted player {player["PLAYER_NAME"]}') # keeping this so that when updating raw data we know when a game is upserted into the database
     # * UNCOMMENT THIS TO UPDATE WEIGHTED DATA TABLE
     weighingPredictionData(sb)
 

@@ -153,16 +153,14 @@ def convertDataToDataFrame(resp):
 
     return pd.DataFrame(allFeatures)
 
-def normalizeAndWeighData(sb, games, means, stdDevs):
-    features = []
-
+def normalizeAndWeighData(sb, players, means, stdDevs):
     # normalizing features for every game for every player
     # if it every times out, just change the starting range of data
-    for game in games[424:]:
-        player_id = game["player_id"]
+    for player in players[424:]:
+        player_id = player["player_id"]
         weightedFeatures = []
 
-        for feature in game["features"]:
+        for feature in player["features"]:
             weightedFeature = {}
 
             # normalizing and adding weight to continuous values
@@ -176,10 +174,12 @@ def normalizeAndWeighData(sb, games, means, stdDevs):
                     weightedFeature[key] = value * featureWeights.get(key, 1.0)
 
             weightedFeatures.append(weightedFeature)
+            print(f'Finished weighing features for {player["PLAYER_NAME"]}') # keeping this so that when updating weighed data we know when we've finished calculating all the features for a player
 
         sb.from_("weighted_data")\
             .upsert({
                 "player_id": player_id,
-                "targets": game["targets"]
+                "targets": player["targets"]
             }, on_conflict="player_id")\
             .execute() 
+        print(f'Upserted weighed features for {player["PLAYER_NAME"]}') # keeping this so that when updating weighed data we know when a player's features are upserted into the database
