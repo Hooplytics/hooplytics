@@ -9,7 +9,7 @@ export function HomePage() {
 
     const [searchOption, setSearchOption] = useState("Players");
     const [searchQuery, setSearchQuery] = useState("");
-    const [displayData, setDisplayData] = useState();
+    const [displayData, setDisplayData] = useState([]);
 
     const getData = async (searchQuery, searchOption) => {
         const data = await getSearchData(searchQuery, searchOption);

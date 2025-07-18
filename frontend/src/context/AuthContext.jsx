@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 const AuthContext = createContext();
 
 export const AuthContextProvider = ({children})  => {
-    const [session, setSession] = useState(undefined);
+    const [session, setSession] = useState(null);
 
     const signUp = async (email, username, password) => {
         const { data, error } = await supabase.auth.signUp({
@@ -25,8 +25,8 @@ export const AuthContextProvider = ({children})  => {
         return { success: true, data };
     }
 
-    const signOut = () => {
-        const { error } = supabase.auth.signOut();
+    const signOut = async () => {
+        const { error } = await supabase.auth.signOut();
 
         if (error) {
             alert(`${error}`);

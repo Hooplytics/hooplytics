@@ -19,7 +19,7 @@ export function PlayerCard({ data }) {
             await toggle(data.id, "player");
         } catch (err) {
             setIsFav(prev => !prev);
-            alert("Could not toggle favorite:", err);
+            alert(`Could not toggle favorite: ${err}`);
         }
     };
 

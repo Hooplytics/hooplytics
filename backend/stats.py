@@ -6,6 +6,7 @@ currSeason = '2024-25'
 @lru_cache(maxsize=1)
 def getPlayerSeasonStats():
     return leaguedashplayerstats.LeagueDashPlayerStats(
+        league_id_nullable="00",
         season=currSeason,
         per_mode_detailed='PerGame'
     ).get_data_frames()[0]
@@ -13,11 +14,13 @@ def getPlayerSeasonStats():
 @lru_cache(maxsize=1)
 def getFullTeamStats():
     off_df = leaguedashteamstats.LeagueDashTeamStats(
+        league_id_nullable="00",
         per_mode_detailed="PerGame",
         season=currSeason,
         measure_type_detailed_defense="Base"
     ).get_data_frames()[0]  
     opp_df = leaguedashteamstats.LeagueDashTeamStats(
+        league_id_nullable="00",
         per_mode_detailed="PerGame",
         season=currSeason,
         measure_type_detailed_defense="Opponent"
@@ -32,6 +35,7 @@ def getFullTeamStats():
 
 def getPlayerGameLog(id, startDate, endDate):
     return playergamelog.PlayerGameLog(
+        league_id_nullable="00",
         season=currSeason,
         player_id=id,
         date_from_nullable = startDate,
@@ -40,6 +44,7 @@ def getPlayerGameLog(id, startDate, endDate):
 
 def getTeamGameLog(id, startDate, endDate):
     return teamgamelog.TeamGameLog(
+        league_id_nullable="00",
         season=currSeason,
         team_id=id,
         date_from_nullable = startDate,

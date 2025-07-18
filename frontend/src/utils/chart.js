@@ -1,10 +1,16 @@
 const MARGIN_TR = 20; // margin for top and right
 const MARGIN_BL = 40; // margin for bottom and left
+
+const LINE_WIDTH = 2;
+const BLUE_LINE = "#007bff";
+const RED_LINE = "#FF0000";
+
 const MILLISECONDS_IN_A_SECOND = 1000;
 const SECS_IN_A_HR = 3600;
 const HRS_IN_A_DAY = 24;
 const DAYS_IN_A_WEEK = 7;
 const WEEKS_IN_A_MONTH = 4;
+const MS_IN_DAY = MILLISECONDS_IN_A_SECOND * SECS_IN_A_HR * HRS_IN_A_DAY;
 
 export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, setEndDate) => {
         const today = lastGame;
@@ -13,11 +19,11 @@ export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, set
             setStartDate(firstGame);
             setEndDate(lastGame);
         } else if (filterItem === "week") {
-            lastDate = new Date(today.getTime() - ((DAYS_IN_A_WEEK - 1) * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
+            lastDate = new Date(today.getTime() - ((DAYS_IN_A_WEEK - 1) * MS_IN_DAY));
             setStartDate(lastDate);
             setEndDate(today);
         } else if (filterItem === "month") {
-            lastDate = new Date(today.getTime() - (WEEKS_IN_A_MONTH * DAYS_IN_A_WEEK * HRS_IN_A_DAY * SECS_IN_A_HR * MILLISECONDS_IN_A_SECOND));
+            lastDate = new Date(today.getTime() - (WEEKS_IN_A_MONTH * DAYS_IN_A_WEEK * MS_IN_DAY));
             setStartDate(lastDate);
             setEndDate(today);
         }
@@ -121,8 +127,8 @@ export const createGraph = (canvasRef, playerStats, firstGame, filterItem, filte
             lastY = y;
         });
 
-        context.strokeStyle = "#007bff";
-        context.lineWidth = 2;
+        context.strokeStyle = BLUE_LINE;
+        context.lineWidth = LINE_WIDTH;
         context.stroke();
 
         context.beginPath();
@@ -155,8 +161,8 @@ export const createGraph = (canvasRef, playerStats, firstGame, filterItem, filte
         }
         context.moveTo(0, height - (statAverage * yScale));
         context.lineTo(width, height - (statAverage * yScale));
-        context.strokeStyle = "#FF0000";
-        context.lineWidth = 2;
+        context.strokeStyle = RED_LINE;
+        context.lineWidth = LINE_WIDTH;
         context.stroke();
 
         context.font = "16px Arial";
