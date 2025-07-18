@@ -177,11 +177,9 @@ def normalizeAndWeighData(sb, games, means, stdDevs):
 
             weightedFeatures.append(weightedFeature)
 
-            sb.from_("weighted_data")\
-                .upsert({
-                    "player_id": player_id,
-                    "game_dates": game["game_dates"],
-                    "features": weightedFeatures,
-                    "targets": game["targets"]
-                }, on_conflict="player_id")\
-                .execute() 
+        sb.from_("weighted_data")\
+            .upsert({
+                "player_id": player_id,
+                "targets": game["targets"]
+            }, on_conflict="player_id")\
+            .execute() 
