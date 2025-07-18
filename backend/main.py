@@ -33,7 +33,7 @@ TTL = timedelta(hours=24)
 @app.on_event("startup")
 async def startup():
     app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    # app.state.predictionData = fetchPredictionData(app.state.sb)
+    app.state.predictionData = fetchPredictionData(app.state.sb)
 
 @app.on_event("shutdown")
 async def shutdown():
