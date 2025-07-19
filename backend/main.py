@@ -1,5 +1,6 @@
 from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
-from helpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
+from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
+from predictionHelpers import fetchPredictionData
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -32,6 +33,7 @@ TTL = timedelta(hours=24)
 @app.on_event("startup")
 async def startup():
     app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    app.state.predictionData = fetchPredictionData(app.state.sb)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -39,7 +41,7 @@ async def shutdown():
 
 @app.get("/{entity_type}/{entity_id}/games", response_model=List[dict])
 async def getGameData(entity_type: Literal["player", "team"], entity_id: int, startDate: date = Query(..., alias="startDate"), endDate: date = Query(..., alias="endDate")):
-    sb     = app.state.sb
+    sb = app.state.sb
     cutoff = datetime.now(timezone.utc) - TTL
 
     currEnd = endDate
@@ -51,7 +53,7 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
         currStart = date.fromisoformat(row["start_date"])
         currEnd  = date.fromisoformat(row["end_date"])
 
-    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) >= cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
+    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) < cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
     if use_cache:
         games = row["data"]
     else:
