@@ -78,22 +78,14 @@ def getOpponentPointAllowed(dict):
         dict[key] = value
 
 def playerPositionInfo(position):
-    guard = 1 if position == "Guard" else 0
-    guard_forward = 1 if position == "Guard-Forward" else 0
-    forward_guard = 1 if position == "Forward-Guard" else 0
-    forward = 1 if position == "Forward"  else 0
-    forward_center = 1 if position == "Forward-Center" else 0
-    center_forward = 1 if position == "Center-Forward" else 0
-    center = 1 if position == "Center" else 0
-
     return {
-        "guard": guard, 
-        "guard_forward": guard_forward, 
-        "forward_guard": forward_guard, 
-        "forward": forward, 
-        "forward_center": forward_center, 
-        "center_forward": center_forward, 
-        "center": center
+        "guard": int(position == "Guard"), 
+        "guard_forward": int(position == "Guard-Forward"), 
+        "forward_guard": int(position == "Forward-Guard"), 
+        "forward": int(position == "Forward"), 
+        "forward_center": int(position == "Forward-Center"), 
+        "center_forward": int(position == "Center-Forward"), 
+        "center": int(position == "Center")
     }
 
 def opponentOppgInfo(matchup, teamOppg):
@@ -104,14 +96,10 @@ def opponentOppgInfo(matchup, teamOppg):
     return opponentOppg
 
 def seasonPeriodInfo(seasonPeriod):
-    season_begin = 1 if seasonPeriod == "season_begin" else 0
-    season_middle = 1 if seasonPeriod == "season_middle" else 0
-    season_end = 1 if seasonPeriod == "season_end" else 0
-
     return {
-        "season_begin": season_begin,
-        "season_middle": season_middle,
-        "season_end": season_end
+        "season_begin": int(seasonPeriod == "season_begin"),
+        "season_middle": int(seasonPeriod == "season_middle"),
+        "season_end": int(seasonPeriod == "season_end")
     }
 
 def restDaysInfo(prevGameDate, game):
