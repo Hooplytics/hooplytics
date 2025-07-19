@@ -45,12 +45,12 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [playerStats, graphOption, filterOption, filterItem])
 
     useEffect(() => {
-        if (playerStats && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
+        if (playerStats.length > 0 && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
             setFoundFirst(true);
             setFirstGame(new Date(playerStats[0].date));
             setStartDate(new Date(playerStats[0].date));
         }
-        if (playerStats && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
+        if (playerStats.length > 0 && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
             setFoundLast(true);
             setLastGame(new Date(playerStats[playerStats.length - 1].date));
             setEndDate(new Date(playerStats[playerStats.length - 1].date));
