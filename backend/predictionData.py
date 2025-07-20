@@ -61,7 +61,7 @@ def getPlayerFeatureData(player, i, teamOppg):
 def weighingPredictionData(sb):
     resp, means, stdDevs = getMeansAndStdDevs(sb)
 
-    normalizeAndWeighData(sb, resp.data, means, stdDevs)
+    # normalizeAndWeighData(sb, resp.data, means, stdDevs)
 
 def main():
     load_dotenv()
@@ -82,7 +82,7 @@ def main():
     #     upsertPredictionData(sb, player["PLAYER_ID"], dates, features, targets)
     #     print(f'Upserted player {player["PLAYER_NAME"]}') # keeping this so that when updating raw data we know when a game is upserted into the database
     # # * UNCOMMENT THIS TO UPDATE WEIGHTED DATA TABLE
-    # weighingPredictionData(sb)
+    weighingPredictionData(sb)
 
 if __name__ == "__main__":
     main()

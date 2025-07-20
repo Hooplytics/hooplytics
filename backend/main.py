@@ -2,7 +2,7 @@ from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
 from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
 from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, weighInput
 from predictionModel import trainModel
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from datetime import datetime, timedelta, date, timezone
@@ -10,6 +10,7 @@ from typing import List, Literal
 from supabase import create_client
 from dotenv import load_dotenv
 import numpy as np
+import json
 
 load_dotenv()
 
@@ -31,12 +32,29 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 TTL = timedelta(hours=24)
+FEATURE_ORDER = [
+    "home",
+    "guard",
+    "center",
+    "forward",
+    "restDays",
+    "season_end",
+    "last7GameAvg",
+    "season_begin",
+    "forward_guard",
+    "guard_forward",
+    "seasonAverage",
+    "season_middle",
+    "center_forward",
+    "forward_center",
+    "opponentPointsAllowed",
+]
 
 @app.on_event("startup")
 async def startup():
-    app.state.sb = await create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    app.state.weighedData = await fetchPredictionData(app.state.sb)
-    rawData, app.state.means, app.state.stdDevs = await getMeansAndStdDevs(app.state.sb)
+    app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    app.state.weighedData = fetchPredictionData(app.state.sb)
+    rawData, app.state.means, app.state.stdDevs = getMeansAndStdDevs(app.state.sb)
     app.state.model = trainModel(app.state.weighedData, k=25)
 
 @app.on_event("shutdown")
@@ -57,7 +75,7 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
         currStart = date.fromisoformat(row["start_date"])
         currEnd  = date.fromisoformat(row["end_date"])
 
-    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) < cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
+    use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) > cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
     if use_cache:
         games = row["data"]
     else:
@@ -109,8 +127,17 @@ def getTeam(team_id: int):
     matched = df[df["TEAM_ID"] == team_id].iloc[0]
     return teamJson(matched, team_id)
 
-@app.post("/predict")
-async def predict(features: dict[str, float]):
-    weighedInput = weighInput(features, app.state.means, app.state.stdDevs)
-    x = np.asarray(weighedInput, dtype=float)
-    return app.state.model.predict(x)
+@app.get("/predict")
+async def predict(features: str = Query(..., description="JSON-encoded features dict")):
+    try:
+        featuresDict = json.loads(features)
+    except json.JSONDecodeError:
+        raise HTTPException(400, "features must be valid JSON")
+    
+    weighedInput = weighInput(featuresDict, app.state.means, app.state.stdDevs)
+    orderedFeatures = []
+    for key in FEATURE_ORDER:
+        orderedFeatures.append(weighedInput[key])
+    x = np.asarray(orderedFeatures, dtype=float)
+    y = app.state.model.predict(x)
+    return y

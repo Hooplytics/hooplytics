@@ -186,7 +186,7 @@ def normalizeAndWeighData(sb, players, means, stdDevs):
             .execute() 
         print(f'Upserted weighed features for a player') # keeping this so that when updating weighed data we know when a player's features are upserted into the database
 
-def getMeansAndStdDevs(sb, resp):
+def getMeansAndStdDevs(sb):
     resp = sb.from_("raw_data")\
         .select("player_id, game_dates, features, targets")\
         .execute()
