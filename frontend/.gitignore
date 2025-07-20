@@ -23,5 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# ignore Python bytecode
 **/__pycache__/
-backend/venv/
+*.py[cod]
+
+# ignore your virtual env
+/backend/venv/
