@@ -1,22 +1,30 @@
-import { useEffect, useState, useRef, use } from "react"
+import { useEffect, useState, useRef } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
 import { getGameData, getPointsPrediction } from "../utils/api"
 import { Tooltip } from "./Tooltip"
-import { filterRecency, createGraph } from "../utils/chart";
+import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
+
+const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
+const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
-    const earliestPossibleStart = new Date(Date.UTC(2024, 9, 15, 0, 0, 0));
-    const latestPossibleEnd = new Date(Date.UTC(2025, 3, 15, 0, 0, 0));
-    const today = new Date();
+    // when tracking which data point we're, we only want to use the x coordinate
+    // this makes it easier on the user to not have to hover on each individual point
+    const [mouseXPosition, setMouseXPosition] = useState(null);
+    const hoveredPointRef = useRef({});
 
     const [graphOption, setGraphOption] = useState("points");
     const [playerStats, setPlayerStats] = useState([]);
     const [filterOption, setFilterOption] = useState("recency") // recency vs grouping
     const [filterItem, setFilterItem] = useState("month") // which timeline to group or filter by
+
+    const earliestPossibleStart = new Date(Date.UTC(2024, 9, 15, 0, 0, 0));
+    const latestPossibleEnd = new Date(Date.UTC(2025, 3, 15, 0, 0, 0));
+    const today = new Date();
 
     const [startDate, setStartDate] = useState(); // the beginning date for the range to query
     const [endDate, setEndDate] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); // the ending date for the range to query
@@ -28,6 +36,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const [predictedPoints, setPredictedPoints] = useState(null); // (setting as state otherwise value won't save)
 
     const canvasRef = useRef(null);
+    const draggingRef = useRef(false); // helps us determine if we are able to drag (can only drag if we are in a week view)
+    const justDraggedRef = useRef(false); // helps us determine if we did drag or if we clicked
+    const startXRef = useRef(null);
 
     // features dict that I will use to predict scores
     const [features, setFeatures] = useState({
@@ -61,7 +72,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }
 
     const getLast7GameAvg = () => {
-        // non‐mutating: pull the last up to 7 games
+        // pull the last up to 7 games
         const lastSeven = playerStats.slice(-7);
 
         // sum their pts fields
@@ -78,6 +89,46 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         setPredictedPoints(points);
     }
 
+    const handleMouseMove = (e) => {
+        setMouseXPosition(e.clientX - MOUSE_OFFSET);
+    }
+
+    const handleMouseDown = (e) => {
+        if (isWeekRange(startDate, endDate)) {
+            draggingRef.current = true;
+            startXRef.current = e.clientX;
+            const canvas = canvasRef.current;
+            canvas.style.cursor = "grabbing";
+        }
+    }
+
+    const handleMouseUp = (e) => {
+        const difference = e.clientX - startXRef.current;
+        if (difference < -DRAG_THRESHOLD && draggingRef.current) {
+            justDraggedRef.current = true; 
+            centerWeek(endDate, setStartDate, setEndDate, setFilterItem);
+        } else if (difference > DRAG_THRESHOLD && draggingRef.current) {
+            justDraggedRef.current = true; 
+            centerWeek(startDate, setStartDate, setEndDate, setFilterItem);
+        }
+        draggingRef.current = false;
+        const canvas = canvasRef.current;
+        canvas.style.cursor = "default";
+    }
+
+    const handleCanvasClick = () => {
+        const canvas = canvasRef.current;
+        canvas.style.cursor = "default";
+        if (justDraggedRef.current) {
+            justDraggedRef.current = false;
+            return;
+        } else {
+            if (hoveredPointRef.current?.date) {
+                centerWeek(hoveredPointRef.current.date, setStartDate, setEndDate, setFilterItem)
+            }
+        }
+    }
+
     useEffect(() => {
         filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
     }, [id, filterItem, filterOption])
@@ -92,13 +143,13 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [startDate, endDate])
     
     useEffect(() => {
-        createGraph(canvasRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+        createGraph(canvasRef, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
         if (playerStats.length > 0 && !foundLast) {
             setFoundLast(true);
             setLastGame(new Date(playerStats[playerStats.length - 1].date));
             setEndDate(new Date(playerStats[playerStats.length - 1].date));
         }
-    }, [playerStats, graphOption, filterOption, filterItem])
+    }, [playerStats, graphOption, filterOption, filterItem, mouseXPosition])
 
     useEffect(() => {
         if (playerStats.length > 0 && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
@@ -116,7 +167,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} onMouseMove={handleMouseMove}>
                 <p className="close-modal" onClick={onClose}>&times;</p>
                 <img className="modal-heart" src={isFav ? "/heart.png" : "empty-heart.png"} onClick={toggleFav} />
                 <div className="player-header">
@@ -164,7 +215,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="fg_pct">Field Goal %</option>
                         <option value="3pt_pct">3pt %</option>
                     </select>
-                    <canvas ref={canvasRef} width={800} height={450} id="canvas" />
+                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()}/>
                 </div>
                 <div className="graph-filter-by">
                     <select className="filter" onChange={(e) => {
@@ -185,16 +236,17 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         }}>
                         {filterOption === "recency" && <option value="season">Full Season</option>}
                         <option value="month">{ filterOption === "recency" ? "Last Month" : "Monthly" }</option>
-                        <option value="week">{ filterOption === "recency" ? "Last Week" : "Weekly" }</option>
+                        <option value="week">{filterOption === "recency" ? "Last Week" : "Weekly"}</option>
+                        {filterOption === "recency" && <option value="custom">Custom</option>}
                     </select>
                     {startDate && endDate && filterOption === "recency" && <div className="custom-dates">
                         <span>
                             <p>Start Date: </p>
-                            <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} placeholderText="Select a start date" minDate={firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy"/>
+                            <DatePicker selected={startDate} onChange={(date) => { setStartDate(date); setFilterItem("custom")}} placeholderText="Select a start date" minDate={firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy"/>
                         </span>
                         <span>
                             <p>End Date: </p>
-                            <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} placeholderText="Select a end date" minDate={startDate || firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy" />
+                            <DatePicker selected={endDate} onChange={(date) => { setEndDate(date);  setFilterItem("custom")}} placeholderText="Select a end date" minDate={startDate || firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy" />
                         </span>
                     </div>}
                 </div>

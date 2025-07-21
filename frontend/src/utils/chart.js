@@ -4,6 +4,7 @@ const MARGIN_BL = 40; // margin for bottom and left
 const LINE_WIDTH = 2;
 const BLUE_LINE = "#007bff";
 const RED_LINE = "#FF0000";
+const WHITE_CIRCLE = "#FFFFFF"
 
 const MILLISECONDS_IN_A_SECOND = 1000;
 const SECS_IN_A_HR = 3600;
@@ -11,6 +12,21 @@ const HRS_IN_A_DAY = 24;
 const DAYS_IN_A_WEEK = 7;
 const WEEKS_IN_A_MONTH = 4;
 const MS_IN_DAY = MILLISECONDS_IN_A_SECOND * SECS_IN_A_HR * HRS_IN_A_DAY;
+
+export const isWeekRange = (startDate, endDate) => {
+    const date = new Date(endDate - 6 * MS_IN_DAY)
+    return date.getTime() === startDate.getTime();
+}
+
+export const centerWeek = (date, setStartDate, setEndDate, setFilterItem) => {
+    setFilterItem("custom")
+    const center = new Date(date);
+    const start = new Date(center - 3 * MS_IN_DAY);
+    const end = new Date(center);
+    end.setDate(center.getDate() + 3);
+    setStartDate(start);
+    setEndDate(end);
+}
 
 export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, setEndDate) => {
         const today = lastGame;
@@ -80,98 +96,123 @@ const granularity = (playerStats, graphOption, filterItem, firstGame) => {
         }
         return granulatedStats;
 }
+
+
+
+export const createGraph = (canvasRef, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
+    const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame);
+    const dates = playerStats.map(game => game.date);
+    const dataPoints = []
+
+    const canvas = canvasRef.current
+    const context = canvas.getContext("2d")
+
+    const containerHeight = canvas.height;
+    const containerWidth = canvas.width;
+    context.clearRect(0, 0, containerWidth, containerHeight)
+
+    const height = containerHeight - MARGIN_TR - MARGIN_BL;
+    const width = containerWidth - MARGIN_TR - MARGIN_BL;
+    const xScale = width / (stats.length - 1)
     
+    const maxY = Math.max(...stats);
+    const yScale = height / maxY;
 
+    context.save()
+    context.translate(MARGIN_BL, MARGIN_TR)
 
-export const createGraph = (canvasRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
-        const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame);
-
-        const canvas = canvasRef.current
-        const context = canvas.getContext("2d")
-
-        const containerHeight = canvas.height;
-        const containerWidth = canvas.width;
-        context.clearRect(0, 0, containerWidth, containerHeight)
-
-        const height = containerHeight - MARGIN_TR - MARGIN_BL;
-        const width = containerWidth - MARGIN_TR - MARGIN_BL;
-        const xScale = width / (stats.length - 1)
-        
-        const maxY = Math.max(...stats);
-        const yScale = height / maxY;
-
-        context.save()
-        context.translate(MARGIN_BL, MARGIN_TR)
-
-        context.beginPath();
-        context.moveTo(0, 0);
-        context.lineTo(0, height);
-        context.lineTo(width, height);
-        context.stroke();
-        context.closePath();
-        
-        let lastX = 0;
-        let lastY = 0;
-        context.beginPath();
-        stats.forEach((stat, index) => {
-            const x = xScale * index;
-            const y = height - (stat * yScale)
-            if (index === 0) {
-                context.moveTo(lastX, y);
-            } else {
-                context.moveTo(lastX, lastY);
-            }
-            context.lineTo(x, y);
-            context.arc(x, y, 2, 0, 2 * Math.PI);
-            lastX = x;
-            lastY = y;
-        });
-
-        context.strokeStyle = BLUE_LINE;
-        context.lineWidth = LINE_WIDTH;
-        context.stroke();
-
-        context.beginPath();
-        let statAverage;
-        switch (graphOption) {
-            case "points":
-                statAverage = pts;
-                break;
-            case "assists":
-                statAverage = ast;
-                break;
-            case "rebounds":
-                statAverage = reb;
-                break;
-            case "blocks":
-                statAverage = blk;
-                break;
-            case "steals":
-                statAverage = stl;
-                break;
-            case "turnovers":
-                statAverage = tov;
-                break;
-            case "fg_pct":
-                statAverage = fg_pct;
-                break;
-            case "3pt_pct":
-                statAverage = fg3_pct;
-                break;
+    context.beginPath();
+    context.moveTo(0, 0);
+    context.lineTo(0, height);
+    context.lineTo(width, height);
+    context.stroke();
+    context.closePath();
+    
+    let lastX = 0;
+    let lastY = 0;
+    context.beginPath();
+    stats.forEach((stat, index) => {
+        const x = xScale * index;
+        const y = height - (stat * yScale)
+        if (index === 0) {
+            context.moveTo(lastX, y);
+        } else {
+            context.moveTo(lastX, lastY);
         }
-        context.moveTo(0, height - (statAverage * yScale));
-        context.lineTo(width, height - (statAverage * yScale));
-        context.strokeStyle = RED_LINE;
-        context.lineWidth = LINE_WIDTH;
-        context.stroke();
+        context.lineTo(x, y);
+        context.arc(x, y, 2, 0, 2 * Math.PI);
+        lastX = x;
+        lastY = y;
+        dataPoints.push({ x: x, y: y });
+    });
 
-        context.font = "16px Arial";
-        context.fillStyle = "white";
-        context.fillText(0, -25, height + 5);
-        context.fillText((maxY / 4).toFixed(1), -37, (height / 4) * 3 + 5);
-        context.fillText((maxY / 2).toFixed(1), -37, (height / 4) * 2 + 5);
-        context.fillText((maxY / 4 * 3).toFixed(1), -37, height / 4 + 5);
-        context.fillText(maxY.toFixed(1), -37, 10);
-    
-        context.restore();
+    context.strokeStyle = BLUE_LINE;
+    context.lineWidth = LINE_WIDTH;
+    context.stroke();
+
+    let hoveredPoint = { x: null, y: null };
+    let closestDistance = 800;
+    let closestIndex = null;
+    dataPoints.forEach((point, index) => {
+        if (Math.abs(mouseXPosition - point.x) < closestDistance) {
+            closestDistance = Math.abs(mouseXPosition - point.x);
+            hoveredPoint = { x: point.x, y: point.y };
+            closestIndex = index;
+        }
+    })
+
+    hoveredPointRef.current = { "date": dates[closestIndex], "stat": stats[closestIndex], "point": hoveredPoint };
+
+    if (hoveredPoint.x >= 0 && hoveredPoint.y >= 0) {
+        context.beginPath();
+        context.moveTo(hoveredPoint.x, hoveredPoint.y);
+        context.arc(hoveredPoint.x, hoveredPoint.y, 2, 0, 2 * Math.PI);
+        context.strokeStyle = WHITE_CIRCLE;
+        context.fillStyle = WHITE_CIRCLE;
+        context.stroke();
     }
+
+    context.beginPath();
+    let statAverage;
+    switch (graphOption) {
+        case "points":
+            statAverage = pts;
+            break;
+        case "assists":
+            statAverage = ast;
+            break;
+        case "rebounds":
+            statAverage = reb;
+            break;
+        case "blocks":
+            statAverage = blk;
+            break;
+        case "steals":
+            statAverage = stl;
+            break;
+        case "turnovers":
+            statAverage = tov;
+            break;
+        case "fg_pct":
+            statAverage = fg_pct;
+            break;
+        case "3pt_pct":
+            statAverage = fg3_pct;
+            break;
+    }
+    context.moveTo(0, height - (statAverage * yScale));
+    context.lineTo(width, height - (statAverage * yScale));
+    context.strokeStyle = RED_LINE;
+    context.lineWidth = LINE_WIDTH;
+    context.stroke();
+
+    context.font = "16px Arial";
+    context.fillStyle = "white";
+    context.fillText(0, -25, height + 5);
+    context.fillText((maxY / 4).toFixed(1), -37, (height / 4) * 3 + 5);
+    context.fillText((maxY / 2).toFixed(1), -37, (height / 4) * 2 + 5);
+    context.fillText((maxY / 4 * 3).toFixed(1), -37, height / 4 + 5);
+    context.fillText(maxY.toFixed(1), -37, 10);
+
+    context.restore();
+}
