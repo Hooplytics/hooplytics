@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ignore Python bytecode
+**/__pycache__/
+*.py[cod]
+
+# ignore your virtual env
+/backend/venv/

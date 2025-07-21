@@ -55,12 +55,12 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     }, [teamStats, graphOption, filterOption, filterItem])
     
     useEffect(() => {
-        if (teamStats &&!foundFirst && (filterOption === "granularity" || filterItem === "season")) {
+        if (teamStats.length > 0 &&!foundFirst && (filterOption === "granularity" || filterItem === "season")) {
             setFoundFirst(true);
             setFirstGame(new Date(teamStats[0].date));
             setStartDate(new Date(teamStats[0].date));
         }
-        if (teamStats && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
+        if (teamStats.length > 0 && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
             setFoundLast(true);
             setLastGame(new Date(teamStats[teamStats.length - 1].date));
             setEndDate(new Date(teamStats[teamStats.length - 1].date));
