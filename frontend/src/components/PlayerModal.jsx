@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, use } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { getGameData } from "../utils/api"
+import { getGameData, getPointsPrediction } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph } from "../utils/chart";
 
@@ -20,12 +20,63 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
 
     const [startDate, setStartDate] = useState(); // the beginning date for the range to query
     const [endDate, setEndDate] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); // the ending date for the range to query
-    const [firstGame, setFirstGame] = useState(earliestPossibleStart); // the date of the first game
-    const [lastGame, setLastGame] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); //  the date of the last game
+    const [firstGame, setFirstGame] = useState(earliestPossibleStart); // the date of the first game (setting as state otherwise value won't save)
+    const [lastGame, setLastGame] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); //  the date of the last game (setting as state otherwise value won't save)
     const [foundFirst, setFoundFirst] = useState(false);
     const [foundLast, setFoundLast] = useState(false);
+    const [calculatedFeatures, setCalculatedFeatures] = useState(false); // (setting as state otherwise value won't save)
+    const [predictedPoints, setPredictedPoints] = useState(null); // (setting as state otherwise value won't save)
 
     const canvasRef = useRef(null);
+
+    // features dict that I will use to predict scores
+    const [features, setFeatures] = useState({
+        "home": false,
+        "guard": position == "Guard",
+        "center": position == "Center",
+        "forward": position == "Forward",
+        "restDays": 3,
+        "season_end": [3, 4].includes(lastGame.getMonth()) ,
+        "last7GameAvg": 0,
+        "season_begin": [9, 10].includes(lastGame.getMonth()),
+        "forward_guard": position == "Forward-Guard",
+        "guard_forward": position == "Guard-Forward",
+        "seasonAverage": pts,
+        "season_middle": [11, 0, 1].includes(lastGame.getMonth()),
+        "center_forward": position == "Center-Forward",
+        "forward_center": position == "Forward-Center",
+        "opponentPointsAllowed": 0
+    })
+
+    const updateFeature = (key, value) => {
+        setFeatures(prev => (
+            { ...prev, [key]: value }
+        ));
+    }    
+
+    const getOpponentPointsAllowed = () => {
+        const scores = [119.3, 112.4, 119.3, 119.4, 115.4, 110.5, 108.2, 112.2, 110.0, 113.0, 109.3, 105.5, 115.1, 115.8, 113.9, 115.3, 116.7, 107.6, 115.2, 121.2, 120.4, 114.2];
+        const randomIndex = Math.floor(Math.random() * scores.length);
+        updateFeature("opponentPointsAllowed", scores[randomIndex]);
+    }
+
+    const getLast7GameAvg = () => {
+        // non‐mutating: pull the last up to 7 games
+        const lastSeven = playerStats.slice(-7);
+
+        // sum their pts fields
+        let sum = 0;
+        for (let i = 0; i < lastSeven.length; ++i) {
+            sum += lastSeven[i].points;
+        }
+        const average = sum / lastSeven.length
+        updateFeature("last7GameAvg", Number(average.toFixed(2)));
+    }
+
+    const getPredictedPoints = async () => { 
+        const points = await getPointsPrediction(features);
+        setPredictedPoints(points);
+    }
 
     useEffect(() => {
         filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
@@ -42,6 +93,11 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     
     useEffect(() => {
         createGraph(canvasRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+        if (playerStats.length > 0 && !foundLast) {
+            setFoundLast(true);
+            setLastGame(new Date(playerStats[playerStats.length - 1].date));
+            setEndDate(new Date(playerStats[playerStats.length - 1].date));
+        }
     }, [playerStats, graphOption, filterOption, filterItem])
 
     useEffect(() => {
@@ -50,10 +106,10 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
             setFirstGame(new Date(playerStats[0].date));
             setStartDate(new Date(playerStats[0].date));
         }
-        if (playerStats.length > 0 && !foundLast && (filterOption === "granularity" || filterItem === "season")) {
-            setFoundLast(true);
-            setLastGame(new Date(playerStats[playerStats.length - 1].date));
-            setEndDate(new Date(playerStats[playerStats.length - 1].date));
+        if (playerStats.length > 0 && !calculatedFeatures) {
+            getLast7GameAvg();
+            getOpponentPointsAllowed();
+            setCalculatedFeatures(true);
         }
     }, [playerStats])
 
@@ -90,7 +146,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                             </div>
                             </div>
                     </div>
-                    </div>
+                </div>
+                <button onClick={getPredictedPoints}>Predict next game points</button>
+                {calculatedFeatures && predictedPoints && <p>Predicted points for next game: {predictedPoints}</p>}
                 <div className="chart-wrapper">
                     <select className="graph-select" onChange={(e) => {
                         e.preventDefault();

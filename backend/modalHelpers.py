@@ -1,7 +1,7 @@
 from stats import getPlayerGameLog, getTeamGameLog, additionalPlayerInfo
 from fastapi import HTTPException
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from dateutil.relativedelta import relativedelta
 
 HARDCODED_ENDDATE = date(2025, 4, 14)
@@ -120,10 +120,11 @@ async def upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currSt
     sb.from_("modal_cache")\
         .upsert({
             "entity_type": entity_type,
-            "entity_id":   entity_id,
-            "start_date":  actual_start.isoformat(),
-            "end_date":    actual_end.isoformat(),
-            "data":        games,
+            "entity_id": entity_id,
+            "start_date": actual_start.isoformat(),
+            "end_date": actual_end.isoformat(),
+            "data": games,
+            "last_fetched": datetime.now(timezone.utc).isoformat()
         }, on_conflict="entity_type,entity_id")\
         .execute()
     

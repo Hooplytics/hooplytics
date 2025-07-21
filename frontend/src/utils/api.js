@@ -69,3 +69,22 @@ export async function getGameData(type, id, startDate, endDate) {
         console.error(err);
     }
 }
+
+export async function getPointsPrediction(features) {
+    const params = new URLSearchParams({
+        features: JSON.stringify(features)
+    });
+
+    const resp = await fetch(`${import.meta.env.VITE_WEB_URL}predict?${params.toString()}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+    });
+
+    if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`Prediction request failed (${resp.status}): ${text}`);
+    }
+
+    const predicted = await resp.json()
+    return predicted;
+}
