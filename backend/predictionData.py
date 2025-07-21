@@ -61,7 +61,7 @@ def getPlayerFeatureData(player, i, teamOppg):
 def weighingPredictionData(sb):
     resp, means, stdDevs = getMeansAndStdDevs(sb)
 
-    # normalizeAndWeighData(sb, resp.data, means, stdDevs)
+    normalizeAndWeighData(sb, resp.data, means, stdDevs)
 
 def main():
     load_dotenv()
