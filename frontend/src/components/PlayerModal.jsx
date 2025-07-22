@@ -39,6 +39,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const draggingRef = useRef(false); // helps us determine if we are able to drag (can only drag if we are in a week view)
     const justDraggedRef = useRef(false); // helps us determine if we did drag or if we clicked
     const startXRef = useRef(null);
+    const [isInsideCanvas, setIsInsideCanvas] = useState(false);
+
+    const [tooltipData, setTooltipData] = useState({});
 
     // features dict that I will use to predict scores
     const [features, setFeatures] = useState({
@@ -143,7 +146,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [startDate, endDate])
     
     useEffect(() => {
-        createGraph(canvasRef, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+        const tooltip = createGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+        setTooltipData(tooltip);
         if (playerStats.length > 0 && !foundLast) {
             setFoundLast(true);
             setLastGame(new Date(playerStats[playerStats.length - 1].date));
@@ -215,7 +219,23 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="fg_pct">Field Goal %</option>
                         <option value="3pt_pct">3pt %</option>
                     </select>
-                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()}/>
+                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
+                    {isInsideCanvas && tooltipData.show &&
+                        <div className="canvas-tooltip" style={{
+                                position: "absolute",
+                                left: tooltipData.x + 330,
+                                top: tooltipData.y + 60,
+                                background: "#222",
+                                color: "#fff",
+                                padding: "7px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                zIndex: 5
+                            }}>
+                            <div><strong>Date:</strong> {tooltipData.date}</div>
+                            <div><strong>{graphOption}:</strong> {tooltipData.value.toFixed(0)}</div>
+                        </div>
+                    }
                 </div>
                 <div className="graph-filter-by">
                     <select className="filter" onChange={(e) => {

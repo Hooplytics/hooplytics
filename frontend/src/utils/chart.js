@@ -99,7 +99,7 @@ const granularity = (playerStats, graphOption, filterItem, firstGame) => {
 
 
 
-export const createGraph = (canvasRef, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
+export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
     const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame);
     const dates = playerStats.map(game => game.date);
     const dataPoints = []
@@ -163,7 +163,7 @@ export const createGraph = (canvasRef, mouseXPosition, hoveredPointRef, playerSt
 
     hoveredPointRef.current = { "date": dates[closestIndex], "stat": stats[closestIndex], "point": hoveredPoint };
 
-    if (hoveredPoint.x >= 0 && hoveredPoint.y >= 0) {
+    if (isInsideCanvas && hoveredPoint.x >= 0 && hoveredPoint.y >= 0) {
         context.beginPath();
         context.moveTo(hoveredPoint.x, hoveredPoint.y);
         context.arc(hoveredPoint.x, hoveredPoint.y, 2, 0, 2 * Math.PI);
@@ -215,4 +215,12 @@ export const createGraph = (canvasRef, mouseXPosition, hoveredPointRef, playerSt
     context.fillText(maxY.toFixed(1), -37, 10);
 
     context.restore();
+
+    return {
+        show: hoveredPoint.x !== null && hoveredPoint.y !== null,
+        x: hoveredPoint.x,
+        y: hoveredPoint.y,
+        date: dates[closestIndex],
+        value: stats[closestIndex]
+    };
 }
