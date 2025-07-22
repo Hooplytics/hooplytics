@@ -202,8 +202,10 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                             </div>
                     </div>
                 </div>
-                <button onClick={getPredictedPoints}>Predict next game points</button>
-                {calculatedFeatures && predictedPoints && <p>Predicted points for next game: {predictedPoints}</p>}
+                <div className="predicted-points">
+                    <button onClick={getPredictedPoints}>Predict next game points</button>
+                    {calculatedFeatures && predictedPoints && <p>Predicted points for next game: <strong>{predictedPoints}</strong></p>}
+                </div>
                 <div className="chart-wrapper">
                     <select className="graph-select" onChange={(e) => {
                         e.preventDefault();
