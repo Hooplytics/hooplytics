@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { getSearchData } from "../utils/api";
 import { SearchContainer } from "./SearchContainer";
+import { Loader } from "./Loader";
 
 export function HomePage() {
     const { session } = UserAuth();
@@ -10,11 +11,14 @@ export function HomePage() {
     const [searchOption, setSearchOption] = useState("Players");
     const [searchQuery, setSearchQuery] = useState("");
     const [displayData, setDisplayData] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const getData = async (searchQuery, searchOption) => {
+        setLoading(true);
         const data = await getSearchData(searchQuery, searchOption);
         if (data) {
             setDisplayData(data);
+            setLoading(false);
         }
     }
 
@@ -53,6 +57,7 @@ export function HomePage() {
                 </div>
                 <SearchContainer option={ searchOption } data={displayData}/>
             </main>
+            {loading && <Loader/>}
         </div>
     )
 }
