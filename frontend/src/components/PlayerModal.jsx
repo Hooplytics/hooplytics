@@ -9,6 +9,21 @@ import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/ch
 const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
 const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
+const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
+                                position: "absolute",
+                                left: tooltipData.x + 330,
+                                top: tooltipData.y + 60,
+                                background: "#222",
+                                color: "#fff",
+                                padding: "7px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                zIndex: 5
+                            }}>
+                            <div><strong>Date:</strong> {tooltipData.date}</div>
+                            <div><strong>{graphOption}:</strong> {tooltipData.value.toFixed(0)}</div>
+                        </div>
+
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
@@ -222,22 +237,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="3pt_pct">3pt %</option>
                     </select>
                     <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
-                    {isInsideCanvas && tooltipData.show &&
-                        <div className="canvas-tooltip" style={{
-                                position: "absolute",
-                                left: tooltipData.x + 330,
-                                top: tooltipData.y + 60,
-                                background: "#222",
-                                color: "#fff",
-                                padding: "7px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                zIndex: 5
-                            }}>
-                            <div><strong>Date:</strong> {tooltipData.date}</div>
-                            <div><strong>{graphOption}:</strong> {tooltipData.value.toFixed(0)}</div>
-                        </div>
-                    }
+                    {isInsideCanvas && tooltipData.show && GRAPH_TOOLTIP}
                 </div>
                 <div className="graph-filter-by">
                     <select className="filter" onChange={(e) => {
