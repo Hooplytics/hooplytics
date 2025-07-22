@@ -9,21 +9,6 @@ import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/ch
 const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
 const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
-const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
-                                position: "absolute",
-                                left: tooltipData.x + 330,
-                                top: tooltipData.y + 60,
-                                background: "#222",
-                                color: "#fff",
-                                padding: "7px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                zIndex: 5
-                            }}>
-                            <div><strong>Date:</strong> {tooltipData.date}</div>
-                            <div><strong>{graphOption}:</strong> {tooltipData.value.toFixed(0)}</div>
-                        </div>
-
 export function TeamModal({ onClose, data, isFav, toggleFav }) {
     const { id, logo_url, name, record, pts, pts_rank, ast, ast_rank, reb, reb_rank, oreb, oreb_rank, blk, blk_rank, stl, stl_rank, tov, tov_rank, fg_pct, fg_pct_rank, fg3_pct, fg3_pct_rank, oppg, oppg_rank, opp_reb, opp_reb_rank, opp_oreb, opp_oreb_rank, opp_tov, opp_tov_rank, opp_fg_pct, opp_fg_pct_rank, opp_fg3_pct, opp_fg3_pct_rank } = data;
     
@@ -55,6 +40,20 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     const [isInsideCanvas, setIsInsideCanvas] = useState(false);
 
     const [tooltipData, setTooltipData] = useState({});
+    const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
+                                position: "absolute",
+                                left: tooltipData.x + 330,
+                                top: tooltipData.y + 60,
+                                background: "#222",
+                                color: "#fff",
+                                padding: "7px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                zIndex: 5
+                            }}>
+                            <div><strong>Date:</strong> {tooltipData.date}</div>
+                            <div><strong>{graphOption}:</strong> {tooltipData?.value?.toFixed(0)}</div>
+                        </div>
 
     function formatRank(rank) {
         const j = rank % 10,
@@ -176,7 +175,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
                         </div>
                 </div>
                 <div className="chart-wrapper">
-                    <select className="graph-select" onChange={(e) => {
+                    <select className="graph-select team-select" onChange={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setGraphOption(e.target.value);

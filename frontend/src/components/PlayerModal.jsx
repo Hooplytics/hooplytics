@@ -9,21 +9,6 @@ import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/ch
 const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
 const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
-const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
-                                position: "absolute",
-                                left: tooltipData.x + 330,
-                                top: tooltipData.y + 60,
-                                background: "#222",
-                                color: "#fff",
-                                padding: "7px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                zIndex: 5
-                            }}>
-                            <div><strong>Date:</strong> {tooltipData.date}</div>
-                            <div><strong>{graphOption}:</strong> {tooltipData.value.toFixed(0)}</div>
-                        </div>
-
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
@@ -57,6 +42,20 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const [isInsideCanvas, setIsInsideCanvas] = useState(false);
 
     const [tooltipData, setTooltipData] = useState({});
+    const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
+                                position: "absolute",
+                                left: tooltipData?.x + 330 || null,
+                                top: tooltipData?.y + 60 || null,
+                                background: "#222",
+                                color: "#fff",
+                                padding: "7px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                zIndex: 5
+                            }}>
+                            <div><strong>Date:</strong> {tooltipData.date}</div>
+                            <div><strong>{graphOption}:</strong> {tooltipData?.value?.toFixed(0)}</div>
+                        </div>
 
     // features dict that I will use to predict scores
     const [features, setFeatures] = useState({

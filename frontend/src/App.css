@@ -516,8 +516,9 @@ select:focus, input:focus {
 .player-stats {
   display: flex;
   gap: 100px;
-  padding-top: 60px;
+  padding-top: 40px;
   font-size: 20px;
+  margin-bottom: 20px;
 }
 
 .player-stats-column {
@@ -544,10 +545,10 @@ select:focus, input:focus {
 
 .team-stats {
   display: flex;
-  padding-top: 50px;
-  gap: 80px;
+  padding-top: 20px;
   font-size: 17px;
-  width: fit-content;
+  width: 1025px;
+  justify-content: space-between;
 }
 
 .team-stats-column {
@@ -556,6 +557,10 @@ select:focus, input:focus {
   gap: 10px;
   margin: auto;
   width: fit-content;
+}
+
+.team-stats-column p {
+  white-space: nowrap;
 }
 
 .chart-wrapper {
@@ -586,16 +591,13 @@ select:focus, input:focus {
   outline: none;
 }
 
+.team-select {
+  margin-top: -35px;
+}
+
 #canvas {
   display: block;
   margin: 0 auto;
-  height: 450px;
-  width: 800px;
-  border: 1px solid white;
-}
-
-#team-canvas {
-  margin: auto;
   height: 450px;
   width: 800px;
   border: 1px solid white;
