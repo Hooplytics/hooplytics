@@ -734,3 +734,7 @@ span p {
 .predicted-points p {
   margin-top: 10px;
 }
+
+.search-container .position-filter {
+  width: fit-content;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
-import { getSearchData } from "../utils/api";
+import { getSearchData, updateInteractionCounts } from "../utils/api";
 import { SearchContainer } from "./SearchContainer";
 import { Loader } from "./Loader";
 
@@ -10,7 +10,9 @@ export function HomePage() {
 
     const [searchOption, setSearchOption] = useState("Players");
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterOption, setFilterOption] = useState("");
     const [displayData, setDisplayData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const getData = async (searchQuery, searchOption) => {
@@ -27,6 +29,19 @@ export function HomePage() {
             setDisplayData([]);
         }
     }, [searchQuery])
+
+    useEffect(() => {
+        if (filterOption) {
+            updateInteractionCounts("position", session);
+        }
+        
+        if (filterOption !== "") {
+            const filteredPlayers = displayData.filter(player => {
+                return player.position === filterOption;
+            })
+            setFilteredData(filteredPlayers);
+        }
+    }, [filterOption])
 
     return (
         <div>
@@ -54,8 +69,18 @@ export function HomePage() {
                     <form onSubmit={(e) => { e.preventDefault(); getData(searchQuery, searchOption); }}>
                         <input placeholder="Search" onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} type="text"/>
                     </form>
+                    {searchOption === "Players" && <select className="position-filter" onChange={(e) => setFilterOption(e.target.value)}>
+                        <option value="" default>All Positions</option>
+                        <option value="Guard">Guard</option>
+                        <option value="Guard-Forward">Guard-Forward</option>
+                        <option value="Forward-Guard">Forward-Guard</option>
+                        <option value="Forward">Forward</option>
+                        <option value="Forward-Center">Forward-Center</option>
+                        <option value="Center-Forward">Center-Forward</option>
+                        <option value="Center">Center</option>
+                    </select>}
                 </div>
-                <SearchContainer option={ searchOption } data={displayData}/>
+                <SearchContainer option={ searchOption } data={filterOption === "" ? displayData : filteredData}/>
             </main>
             {loading && <Loader/>}
         </div>

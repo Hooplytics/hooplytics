@@ -5,10 +5,6 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client
 
-# using Manhattan Distance because we want outliers to have less of an effect
-def manhattanDistance(x1, x2):
-    return np.sum(np.abs(x1 - x2))
-
 class KNN:
     def __init__(self, k=3):
         self.k = k
@@ -17,10 +13,12 @@ class KNN:
         self.X_train = np.array(X, dtype=float)
         self.y_train = np.array(y, dtype=int)
 
-    def predict(self, x):
+    def predict(self, x, weights):
         x = np.asarray(x, dtype=float)
+        featureWeights = np.array(weights, dtype=float)
         # this speeds up the process rather than using loops
-        distances = np.sum(np.abs(self.X_train - x), axis=1) # distances from point to all training data
+        weightedDiff = np.abs(self.X_train - x) * (featureWeights)
+        distances = np.sum(weightedDiff, axis=1) # distances from point to all training data (using manhattan distance to try to drown out outliers)
         kIndex = np.argpartition(distances, self.k)[:self.k] # gets k smallest without caring about order
         return round(float(np.mean(self.y_train[kIndex]))) # average target values of k closest
 
@@ -48,7 +46,7 @@ def trainModel(data, k):
 #     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 #     sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-#     resp = sb.from_("weighted_data")\
+#     resp = sb.from_("normalized_data")\
 #         .select("features, targets")\
 #         .execute()
 #     df = pd.DataFrame(resp.data)
