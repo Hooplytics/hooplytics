@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { getGameData, getPointsPrediction } from "../utils/api"
+import { UserAuth } from "../context/AuthContext"
+import { getGameData, getPointsPrediction, updateInteractionCounts} from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
 
@@ -11,6 +12,8 @@ const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
+
+    const { session } = UserAuth();
 
     // when tracking which data point we're, we only want to use the x coordinate
     // this makes it easier on the user to not have to hover on each individual point
@@ -102,7 +105,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }
 
     const getPredictedPoints = async () => { 
-        const points = await getPointsPrediction(features);
+        const points = await getPointsPrediction(session, features);
         setPredictedPoints(points);
     }
 
@@ -161,7 +164,9 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     
     useEffect(() => {
         const tooltip = createGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
-        setTooltipData(tooltip);
+        if (tooltip !== tooltipData) {
+            setTooltipData(tooltip);
+        }
         if (playerStats.length > 0 && !foundLast) {
             setFoundLast(true);
             setLastGame(new Date(playerStats[playerStats.length - 1].date));
@@ -181,6 +186,23 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
             setCalculatedFeatures(true);
         }
     }, [playerStats])
+
+    useEffect(() => {
+        if (isInsideCanvas) {
+            updateInteractionCounts("point", session);
+        }
+    }, [tooltipData?.date])
+
+    useEffect(() => {
+        // prevent multiple shoots on page load
+        const handler = setTimeout(() => {
+            if (session && startDate && endDate) {
+                updateInteractionCounts("date", session);
+            }
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [startDate, endDate, filterOption])
 
     return (
         <div className="modal">

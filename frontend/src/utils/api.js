@@ -1,6 +1,36 @@
+export async function updateInteractionCounts(interactionType, session) {
+    if (!session) {
+        console.error("No session available");
+        return;
+    }
+
+    const accessToken = session.access_token;
+
+    try {
+        const resp = await fetch(
+            `${import.meta.env.VITE_WEB_URL}interaction/${interactionType}`,
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        if (!resp.ok) {
+            const err = await response.json().catch(() => ({}));
+            console.error("Failed to update interaction:", response.status, err);
+        }
+    } catch (error) {
+        console.error("Error updating interaction:", error);
+    }
+}
+
+
 export async function getSearchData(searchQuery = '', searchOption) {
     const opt = searchOption.toLowerCase();
-    const q   = searchQuery.trim().toLowerCase();
+    const q  = searchQuery.trim().toLowerCase();
 
     try {
         let url = `${import.meta.env.VITE_WEB_URL}${
@@ -70,14 +100,21 @@ export async function getGameData(type, id, startDate, endDate) {
     }
 }
 
-export async function getPointsPrediction(features) {
+export async function getPointsPrediction(session, features) {
+    const headers = { "Content-Type": "application/json" };
+
+    const token = session?.access_token;
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+    }
+    
     const params = new URLSearchParams({
         features: JSON.stringify(features)
     });
 
     const resp = await fetch(`${import.meta.env.VITE_WEB_URL}predict?${params.toString()}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers
     });
 
     if (!resp.ok) {

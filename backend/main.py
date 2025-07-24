@@ -1,8 +1,8 @@
 from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
 from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
-from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, weighInput
+from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getUserInteractions, getInteractionAverages
 from predictionModel import trainModel
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from datetime import datetime, timedelta, date, timezone
@@ -17,12 +17,12 @@ load_dotenv()
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173"
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -53,9 +53,9 @@ FEATURE_ORDER = [
 @app.on_event("startup")
 async def startup():
     app.state.sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    app.state.weighedData = fetchPredictionData(app.state.sb)
-    rawData, app.state.means, app.state.stdDevs = getMeansAndStdDevs(app.state.sb)
-    app.state.model = trainModel(app.state.weighedData, k=25)
+    app.state.normalizedData = fetchPredictionData(app.state.sb)
+    _, app.state.means, app.state.stdDevs = getMeansAndStdDevs(app.state.sb)
+    app.state.model = trainModel(app.state.normalizedData, k=25)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -128,16 +128,66 @@ def getTeam(team_id: int):
     return teamJson(matched, team_id)
 
 @app.get("/predict")
-async def predict(features: str = Query(..., description="JSON-encoded features dict")):
+async def predict(request: Request, features: str = Query(..., description="JSON-encoded features dict")):
     try:
         featuresDict = json.loads(features)
     except json.JSONDecodeError:
         raise HTTPException(400, "features must be valid JSON")
     
-    weighedInput = weighInput(featuresDict, app.state.means, app.state.stdDevs)
+    sb = app.state.sb
+    jwt = request.headers.get("Authorization", "")
+    if jwt:
+        jwt = jwt.replace("Bearer ", "")
+        sb.auth.set_session(access_token=jwt, refresh_token="") 
+        user = sb.auth.get_user(jwt)
+        user_id = str(user.dict().get("user", {}).get("id"))
+
+        averages = getInteractionAverages()
+        userInteractions = getUserInteractions(sb, averages, user_id)
+        weights = getUserWeights(user_id, sb, userInteractions, FEATURE_ORDER)
+    else:
+        weights = getUserWeights(None, sb, None, FEATURE_ORDER)
+
+    normalizedInput = normalizeInput(featuresDict, app.state.means, app.state.stdDevs)
     orderedFeatures = []
     for key in FEATURE_ORDER:
-        orderedFeatures.append(weighedInput[key])
+        orderedFeatures.append(normalizedInput[key])
     x = np.asarray(orderedFeatures, dtype=float)
-    y = app.state.model.predict(x)
+    y = app.state.model.predict(x, weights)
     return y
+
+@app.post("/interaction/{type}")
+async def updateInteraction(type: str, request: Request):
+    sb = app.state.sb
+    jwt = request.headers.get("Authorization", "").replace("Bearer ", "")
+    sb.auth.set_session(access_token=jwt, refresh_token="") 
+    user = sb.auth.get_user(jwt)
+    user_id = str(user.dict().get("user", {}).get("id"))
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized user")
+
+    if type not in ["position", "date", "point"]:
+        raise HTTPException(status_code=400, detail="Invalid interaction type")
+
+    column_map = {
+        "position": "position_count",
+        "date": "date_count",
+        "point": "point_count"
+    }
+    column_to_increment = column_map[type]
+
+    resp = sb.from_("user_interactions")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="User interaction row not found")
+
+    update_data = {column_to_increment: resp.data[0][column_to_increment] + 1}
+    resp = sb.from_("user_interactions")\
+        .update(update_data)\
+        .eq("user_id", user_id)\
+        .execute()
+
+    return {"status": "ok", "updated": resp.data}

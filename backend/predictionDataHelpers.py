@@ -1,6 +1,14 @@
 import pandas as pd
 from stats import getFullTeamStats
 from datetime import datetime
+from supabase import create_client
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 monthlyPeriods = {
     "OCT": "season_begin",
@@ -51,24 +59,6 @@ normalizeKeys = [
     "restDays", 
     "opponentPointsAllowed"
 ]
-
-featureWeights = {
-    "seasonAverage": 5.00,
-    "last7GameAvg": 3.00,
-    "restDays": 1.00,
-    "opponentPointsAllowed": 2,
-    "home": 1.00,
-    "season_begin": 1.00,
-    "season_middle": 1.00,
-    "season_end": 1.00,
-    "guard": 1.25,
-    "guard_forward": 1.25,
-    "forward_guard": 1.25,
-    "forward": 1.25,
-    "forward_center": 1.25,
-    "center_forward": 1.25,
-    "center": 1.25,
-}
 
 def getOpponentPointAllowed(dict):
     teamAverages = getFullTeamStats()
@@ -123,7 +113,7 @@ def upsertPredictionData(sb, id, dates, features, targets):
 
 def fetchPredictionData(sb):
     resp = sb.\
-        from_("weighted_data")\
+        from_("normalized_data")\
         .select("features,targets")\
         .execute()
     
@@ -141,38 +131,38 @@ def convertDataToDataFrame(resp):
 
     return pd.DataFrame(allFeatures)
 
-def normalizeAndWeighData(sb, players, means, stdDevs):
+def normalizeData(sb, players, means, stdDevs):
     # normalizing features for every game for every player
     # if it every times out, just change the starting range of data
     for player in players:
         player_id = player["player_id"]
-        weightedFeatures = []
+        normalizedFeatures = []
 
         for feature in player["features"]:
-            weightedFeature = {}
+            normalizedFeature = {}
 
             # normalizing and adding weight to continuous values
             for key in normalizeKeys:
                 z = (feature[key] - means[key]) / stdDevs[key]
-                weightedFeature[key] = z * featureWeights.get(key, 1.0)
+                normalizedFeature[key] = z
 
             # adding weight to binary values
             for key, value in feature.items():
                 if key not in normalizeKeys:
-                    weightedFeature[key] = value * featureWeights.get(key, 1.0)
+                    normalizedFeature[key] = value
 
-            weightedFeatures.append(weightedFeature)
-            print(f'Finished weighing features for a player') # keeping this so that when updating weighed data we know when we've finished calculating all the features for a player
+            normalizedFeatures.append(normalizedFeature)
+            print(f'Finished normalizing features for a player') # keeping this so that when updating weighed data we know when we've finished calculating all the features for a player
 
-        sb.from_("weighted_data")\
+        sb.from_("normalized_data")\
             .upsert({
                 "player_id": player_id,
                 "game_dates": player["game_dates"],
-                "features": weightedFeatures,
+                "features": normalizedFeatures,
                 "targets": player["targets"]
             }, on_conflict="player_id")\
             .execute() 
-        print(f'Upserted weighed features for a player') # keeping this so that when updating weighed data we know when a player's features are upserted into the database
+        print(f'Upserted normalized features for a player') # keeping this so that when updating weighed data we know when a player's features are upserted into the database
 
 def getMeansAndStdDevs(sb):
     resp = sb.from_("raw_data")\
@@ -187,17 +177,82 @@ def getMeansAndStdDevs(sb):
     stdDevs  = df[normalizeKeys].std(ddof=0)
     return [resp, means, stdDevs]
 
-def weighInput(feature, means, stdDevs):
-    weightedFeature = {}
+def normalizeInput(feature, means, stdDevs):
+    normalizedFeature = {}
 
     # normalizing and adding weight to continuous values
     for key in normalizeKeys:
         z = (feature[key] - means[key]) / stdDevs[key]
-        weightedFeature[key] = z * featureWeights.get(key, 1.0)
+        normalizedFeature[key] = z
 
     # adding weight to binary values
     for key, value in feature.items():
         if key not in normalizeKeys:
-            weightedFeature[key] = value * featureWeights.get(key, 1.0)
+            normalizedFeature[key] = value
     
-    return weightedFeature
+    return normalizedFeature
+
+def getInteractionAverages():
+    sb = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    resp = sb.from_("user_interactions")\
+        .select("point_count,date_count,position_count")\
+        .execute()
+    
+    data = resp.data
+
+    n = len(data)
+    return {
+        "position": sum(row["position_count"] for row in data) / n,
+        "date": sum(row["date_count"] for row in data) / n,
+        "point": sum(row["point_count"] for row in data) / n
+    }
+
+def getUserInteractions(sb, averages, user_id):
+    resp = sb.from_("user_interactions")\
+        .select("point_count,date_count,position_count")\
+        .eq("user_id", user_id)\
+        .single()\
+        .execute()
+    
+    data = resp.data
+    return {
+        "position": data["position_count"] / averages["position"],
+        "date": data["date_count"] / averages["date"],
+        "point": data["point_count"] / averages["point"]
+    }
+
+def getUserWeights(userId, sb, userInteractions, order):
+    weights = {
+        "seasonAverage": 3.00,
+        "last7GameAvg": 4.00,
+        "restDays": 1.00,
+        "opponentPointsAllowed": 2.00,
+        "home": 1.00,
+        "season_begin": 1.00,
+        "season_middle": 1.00,
+        "season_end": 1.00,
+        "guard": 1.25,
+        "guard_forward": 1.25,
+        "forward_guard": 1.25,
+        "forward": 1.25,
+        "forward_center": 1.25,
+        "center_forward": 1.25,
+        "center": 1.25,
+    }
+
+    if userId:
+        categoriesMap = {
+            "point": ["seasonAverage", "last7GameAvg"],
+            "date": ["season_begin", "season_middle", "season_end"],
+            "position": [ "guard", "guard_forward", "forward_guard", "forward", "forward_center", "center_forward", "center"],
+        }
+
+        for interaction in userInteractions:
+            for category in categoriesMap[interaction]:
+                weights[category] *= userInteractions[interaction]
+
+    orderedWeights = []
+    for category in order:
+        orderedWeights.append(weights[category])
+
+    return orderedWeights

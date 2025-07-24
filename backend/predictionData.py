@@ -1,6 +1,6 @@
 # [season ppg avg, last 7 game ppg avg (running for first 7 games), home or away, days between games, opp defensive rating, season_beginning, season_middle, season_end, g, g-f, f-g, f, f-c, c]
 from stats import getPlayerGameLog, additionalPlayerInfo, getPlayerSeasonStats
-from predictionDataHelpers import playerPositionInfo, restDaysInfo, opponentOppgInfo, seasonPeriodInfo, monthlyPeriods, convertDataToDataFrame, normalizeAndWeighData, getOpponentPointAllowed, upsertPredictionData, getMeansAndStdDevs
+from predictionDataHelpers import playerPositionInfo, restDaysInfo, opponentOppgInfo, seasonPeriodInfo, monthlyPeriods, convertDataToDataFrame, normalizeData, getOpponentPointAllowed, upsertPredictionData, getMeansAndStdDevs
 from collections import deque
 from datetime import datetime
 from supabase import create_client
@@ -58,10 +58,10 @@ def getPlayerFeatureData(player, i, teamOppg):
     print(f'Finished feature for player {i+1}: {player["PLAYER_NAME"]}') # keeping this so that when updating raw data we know when we've finished calculating all the features for a player
     return [features, values, dates]
 
-def weighingPredictionData(sb):
+def normalizingPredictionData(sb):
     resp, means, stdDevs = getMeansAndStdDevs(sb)
 
-    normalizeAndWeighData(sb, resp.data, means, stdDevs)
+    normalizeData(sb, resp.data, means, stdDevs)
 
 def main():
     load_dotenv()
@@ -82,7 +82,7 @@ def main():
     #     upsertPredictionData(sb, player["PLAYER_ID"], dates, features, targets)
     #     print(f'Upserted player {player["PLAYER_NAME"]}') # keeping this so that when updating raw data we know when a game is upserted into the database
     # # * UNCOMMENT THIS TO UPDATE WEIGHTED DATA TABLE
-    weighingPredictionData(sb)
+    normalizingPredictionData(sb)
 
 if __name__ == "__main__":
     main()
