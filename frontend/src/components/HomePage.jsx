@@ -67,7 +67,7 @@ export function HomePage() {
                         <option value="Teams">Teams</option>
                     </select>
                     <form onSubmit={(e) => { e.preventDefault(); getData(searchQuery, searchOption); }}>
-                        <input placeholder="Search" onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} type="text"/>
+                        <input data-cy="search" placeholder="Search" onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} type="text"/>
                     </form>
                     {searchOption === "Players" && <select className="position-filter" onChange={(e) => setFilterOption(e.target.value)}>
                         <option value="" default>All Positions</option>

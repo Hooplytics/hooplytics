@@ -69,8 +69,8 @@ export function AuthenticationPage() {
                     <input data-cy="email" onChange={(e) => setEmail(e.target.value)} value={email} placeholder="Email" required/>
                     {!isLogin && <input data-cy="username" onChange={(e) => setUsername(e.target.value)} value={username} placeholder="Username" required/>}
                     <input data-cy="password" onChange={(e) => setPassword(e.target.value)} value={password} placeholder="Password" required/>
-                    {isLogin && <button type="submit" disabled={loading}>Login</button>}
-                    {!isLogin && <button data-cy="submit" type="submit" disabled={loading}>Signup</button>}
+                    {isLogin && <button data-cy="login-submit" type="submit" disabled={loading}>Login</button>}
+                    {!isLogin && <button data-cy="signup-submit" type="submit" disabled={loading}>Signup</button>}
                 </form>
             </div>
             {loading && <Loader/>}
