@@ -52,6 +52,7 @@ export const AuthContextProvider = ({children})  => {
         }
     }
 
+    // checks for active user logged in or user change
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);

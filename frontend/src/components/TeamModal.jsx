@@ -39,7 +39,8 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     const startXRef = useRef(null);
     const [isInsideCanvas, setIsInsideCanvas] = useState(false);
 
-    const [tooltipData, setTooltipData] = useState({});
+    const [tooltipData, setTooltipData] = useState({}); // data to be shown on graph for tooltip
+    // doing this so that the tooltip position adjusts to where the data point is
     const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
                                 position: "absolute",
                                 left: tooltipData.x + 330,
@@ -64,50 +65,54 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
         
         return `${rank}th`;
     }
+
     const handleMouseMove = (e) => {
-            setMouseXPosition(e.clientX - MOUSE_OFFSET);
-        }
+        setMouseXPosition(e.clientX - MOUSE_OFFSET);
+    }
     
-        const handleMouseDown = (e) => {
-            if (isWeekRange(startDate, endDate)) {
-                draggingRef.current = true;
-                startXRef.current = e.clientX;
-                const canvas = canvasRef.current;
-                canvas.style.cursor = "grabbing";
-            }
-        }
-    
-        const handleMouseUp = (e) => {
-            const difference = e.clientX - startXRef.current;
-            if (difference < -DRAG_THRESHOLD && draggingRef.current) {
-                justDraggedRef.current = true; 
-                centerWeek(endDate, setStartDate, setEndDate, setFilterItem);
-            } else if (difference > DRAG_THRESHOLD && draggingRef.current) {
-                justDraggedRef.current = true; 
-                centerWeek(startDate, setStartDate, setEndDate, setFilterItem);
-            }
-            draggingRef.current = false;
+    const handleMouseDown = (e) => {
+        if (isWeekRange(startDate, endDate)) {
+            draggingRef.current = true;
+            startXRef.current = e.clientX;
             const canvas = canvasRef.current;
-            canvas.style.cursor = "default";
+            canvas.style.cursor = "grabbing";
         }
-    
-        const handleCanvasClick = () => {
-            const canvas = canvasRef.current;
-            canvas.style.cursor = "default";
-            if (justDraggedRef.current) {
-                justDraggedRef.current = false;
-                return;
-            } else {
-                if (hoveredPointRef.current?.date) {
-                    centerWeek(hoveredPointRef.current.date, setStartDate, setEndDate, setFilterItem)
-                }
+    }
+
+    const handleMouseUp = (e) => {
+        const difference = e.clientX - startXRef.current;
+        if (difference < -DRAG_THRESHOLD && draggingRef.current) {
+            justDraggedRef.current = true; 
+            centerWeek(endDate, setStartDate, setEndDate, setFilterItem);
+        } else if (difference > DRAG_THRESHOLD && draggingRef.current) {
+            justDraggedRef.current = true; 
+            centerWeek(startDate, setStartDate, setEndDate, setFilterItem);
+        }
+        draggingRef.current = false;
+        const canvas = canvasRef.current;
+        canvas.style.cursor = "default";
+    }
+
+    const handleCanvasClick = () => {
+        const canvas = canvasRef.current;
+        canvas.style.cursor = "default";
+        if (justDraggedRef.current) {
+            justDraggedRef.current = false;
+            return;
+        } else {
+            if (hoveredPointRef.current?.date) {
+                centerWeek(hoveredPointRef.current.date, setStartDate, setEndDate, setFilterItem)
             }
         }
+    }
     
+     // effect for changing recency
+    // want this to run on model load and shoot anytime the recency item changes or the filter option changes
     useEffect(() => {
         filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
     }, [id, filterItem, filterOption])
-        
+    
+     // only want to load new stats whenever the date range changes
     useEffect(() => {
         const loadStats = async () => {
             const stats = await getGameData("team", id, startDate, endDate);
@@ -116,10 +121,18 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
         if (!startDate) return;
         loadStats();
     }, [startDate, endDate])
-        
+    
+    // changing what the graph looks like either when the date range changes, the filter option changes, or the tool tip data changes (for tooltip and hover animation)
+    // not using mouse position because mouse can change infinitesmely but not change the hovered point
     useEffect(() => {
         const tooltip = createGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, teamStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
-        setTooltipData(tooltip);
+        // doing this to prevent infinite effect shoots
+        if (tooltip !== tooltipData) {
+            setTooltipData(tooltip);
+        }
+        // trying to get the date of the last game
+        // don't want to do this again after finding last game
+        // should only run on model load and never again
         if (teamStats.length > 0 && !foundLast) {
             setFoundLast(true);
             setLastGame(new Date(teamStats[teamStats.length - 1].date));
@@ -128,12 +141,34 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
     }, [teamStats, graphOption, filterOption, filterItem, mouseXPosition])
     
     useEffect(() => {
+        // want to find the date of the first game
+        // we can only confidently say that we have the first game in our date range if we are querying season data
         if (teamStats.length > 0 && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
             setFoundFirst(true);
             setFirstGame(new Date(teamStats[0].date));
             setStartDate(new Date(teamStats[0].date));
         }
     }, [teamStats])
+
+    // only want to update if we are hovering inside of the graph
+    // updates on point hover change
+    useEffect(() => {
+        if (isInsideCanvas) {
+            updateInteractionCounts("point", session);
+        }
+    }, [tooltipData?.date])
+
+    // update date interaction count whenever the date range changes or filter option changes
+    useEffect(() => {
+        // prevent multiple shoots on page load
+        const handler = setTimeout(() => {
+            if (session && startDate && endDate) {
+                updateInteractionCounts("date", session);
+            }
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [startDate, endDate, filterOption])
     
     return (
         <div className="modal">

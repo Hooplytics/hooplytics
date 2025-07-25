@@ -47,7 +47,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const startXRef = useRef(null);
     const [isInsideCanvas, setIsInsideCanvas] = useState(false);
 
-    const [tooltipData, setTooltipData] = useState({});
+    const [tooltipData, setTooltipData] = useState({}); // data to be shown on graph for tooltip
+    // doing this so that the tooltip position adjusts to where the data point is
     const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
                                 position: "absolute",
                                 left: tooltipData?.x + 330 || null,
@@ -155,10 +156,13 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         }
     }
 
+    // effect for changing recency
+    // want this to run on model load and shoot anytime the recency item changes or the filter option changes
     useEffect(() => {
         filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
     }, [id, filterItem, filterOption])
     
+    // only want to load new stats whenever the date range changes
     useEffect(() => {
         const loadStats = async () => {
             const stats = await getGameData("player", id, startDate, endDate);
@@ -168,24 +172,35 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         loadStats();
     }, [startDate, endDate])
     
+    // changing what the graph looks like either when the date range changes, the filter option changes, or the tool tip data changes (for tooltip and hover animation)
+    // not using mouse position because mouse can change infinitesmely but not change the hovered point
     useEffect(() => {
         const tooltip = createGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+        // doing this to prevent infinite effect shoots
         if (tooltip !== tooltipData) {
             setTooltipData(tooltip);
         }
+        // trying to get the date of the last game
+        // don't want to do this again after finding last game
+        // should only run on model load and never again
         if (playerStats.length > 0 && !foundLast) {
             setFoundLast(true);
             setLastGame(new Date(playerStats[playerStats.length - 1].date));
             setEndDate(new Date(playerStats[playerStats.length - 1].date));
         }
-    }, [playerStats, graphOption, filterOption, filterItem, mouseXPosition])
+    }, [playerStats, graphOption, filterOption, filterItem, tooltipData])
 
     useEffect(() => {
+        // want to find the date of the first game
+        // we can only confidently say that we have the first game in our date range if we are querying season data
         if (playerStats.length > 0 && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
             setFoundFirst(true);
             setFirstGame(new Date(playerStats[0].date));
             setStartDate(new Date(playerStats[0].date));
         }
+
+        // want to get values to use for prediction model
+        // should only run on model load
         if (playerStats.length > 0 && !calculatedFeatures) {
             getLast7GameAvg();
             getOpponentPointsAllowed();
@@ -193,12 +208,15 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         }
     }, [playerStats])
 
+    // only want to update if we are hovering inside of the graph
+    // updates on point hover change
     useEffect(() => {
         if (isInsideCanvas) {
             updateInteractionCounts("point", session);
         }
     }, [tooltipData?.date])
 
+    // update date interaction count whenever the date range changes or filter option changes
     useEffect(() => {
         // prevent multiple shoots on page load
         const handler = setTimeout(() => {

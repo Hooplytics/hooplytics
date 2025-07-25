@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
 
+// get all favorite teams or players (depending on what is asked for) for a user 
 export async function listFavorites(userId, type) {
     const { data, error } = await supabase
     .from("favorites")

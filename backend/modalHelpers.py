@@ -126,6 +126,7 @@ async def upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currSt
     
     return games
 
+# getting games within the date range
 def queryGames(games, startDate, endDate):
     result = []
     for game in games:

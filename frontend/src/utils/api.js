@@ -104,6 +104,7 @@ export async function getPointsPrediction(session, features) {
     const headers = { "Content-Type": "application/json" };
 
     const token = session?.access_token;
+    // want to still allow functionality if no user log in so we make this header optional if there is an active user
     if (token) {
         headers["Authorization"] = `Bearer ${token}`
     }

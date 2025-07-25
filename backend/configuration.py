@@ -64,6 +64,30 @@ TEAM_ABBREVIATIONS = {
     "WAS": "Washington Wizards"
 }
 
+STATIC_WEIGHTS = {
+        "seasonAverage": 3.00,
+        "last7GameAvg": 4.00,
+        "restDays": 1.00,
+        "opponentPointsAllowed": 2.00,
+        "home": 1.00,
+        "season_begin": 1.00,
+        "season_middle": 1.00,
+        "season_end": 1.00,
+        "guard": 1.25,
+        "guard_forward": 1.25,
+        "forward_guard": 1.25,
+        "forward": 1.25,
+        "forward_center": 1.25,
+        "center_forward": 1.25,
+        "center": 1.25,
+    }
+
+CATEGORY_MAP = {
+            "point": ["seasonAverage", "last7GameAvg"],
+            "date": ["season_begin", "season_middle", "season_end"],
+            "position": [ "guard", "guard_forward", "forward_guard", "forward", "forward_center", "center_forward", "center"],
+        }
+
 NORMALIZE_KEYS = [
     "seasonAverage", 
     "last7GameAvg", 
