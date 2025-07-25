@@ -1,11 +1,7 @@
+from configuration import HARDCODED_ENDDATE, ONE_MONTH_BACK
 from stats import getPlayerGameLog, getTeamGameLog, additionalPlayerInfo
-from fastapi import HTTPException
 import pandas as pd
-from datetime import date, datetime, timezone
-from dateutil.relativedelta import relativedelta
-
-HARDCODED_ENDDATE = date(2025, 4, 14)
-ONE_MONTH_BACK = relativedelta(weeks=4)
+from datetime import datetime, timezone
 
 def playerJson(row, id, additionalInfo):
     return {

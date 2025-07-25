@@ -6,6 +6,7 @@ import { UserAuth } from "../context/AuthContext"
 import { getGameData, getPointsPrediction, updateInteractionCounts} from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
+import { Loader } from "./Loader";
 
 const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
 const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
@@ -19,6 +20,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     // this makes it easier on the user to not have to hover on each individual point
     const [mouseXPosition, setMouseXPosition] = useState(null);
     const hoveredPointRef = useRef({});
+
+    const [loading, setLoading] = useState(false);
 
     const [graphOption, setGraphOption] = useState("points");
     const [playerStats, setPlayerStats] = useState([]);
@@ -105,8 +108,11 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }
 
     const getPredictedPoints = async () => { 
+        setLoading(true)
         const points = await getPointsPrediction(session, features);
         setPredictedPoints(points);
+        setLoading(false);
+        updateInteractionCounts("point", session);
     }
 
     const handleMouseMove = (e) => {
@@ -293,6 +299,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         </span>
                     </div>}
                 </div>
+                {loading && <Loader/>}
             </div>
         </div>
     )

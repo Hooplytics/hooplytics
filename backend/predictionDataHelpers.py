@@ -1,64 +1,8 @@
+from configuration import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TEAM_ABBREVIATIONS, NORMALIZE_KEYS, FEATURE_ORDER
 import pandas as pd
 from stats import getFullTeamStats
 from datetime import datetime
 from supabase import create_client
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-monthlyPeriods = {
-    "OCT": "season_begin",
-    "NOV": "season_begin",
-    "DEC": "season_middle",
-    "JAN": "season_middle",
-    "FEB": "season_middle",
-    "MAR": "season_end",
-    "APR": "season_end"
-}
-
-teamAbbreviations = {
-    "ATL": "Atlanta Hawks",
-    "BOS": "Boston Celtics",
-    "BKN": "Brooklyn Nets",
-    "CHA": "Charlotte Hornets",
-    "CHI": "Chicago Bulls",
-    "CLE": "Cleveland Cavaliers",
-    "DAL": "Dallas Mavericks",
-    "DEN": "Denver Nuggets",
-    "DET": "Detroit Pistons",
-    "GSW": "Golden State Warriors",
-    "HOU": "Houston Rockets",
-    "IND": "Indiana Pacers",
-    "LAC": "LA Clippers",
-    "LAL": "Los Angeles Lakers",
-    "MEM": "Memphis Grizzlies",
-    "MIA": "Miami Heat",
-    "MIL": "Milwaukee Bucks",
-    "MIN": "Minnesota Timberwolves",
-    "NOP": "New Orleans Pelicans",
-    "NYK": "New York Knicks",
-    "OKC": "Oklahoma City Thunder",
-    "ORL": "Orlando Magic",
-    "PHI": "Philadelphia 76ers",
-    "PHX": "Phoenix Suns",
-    "POR": "Portland Trail Blazers",
-    "SAC": "Sacramento Kings",
-    "SAS": "San Antonio Spurs",
-    "TOR": "Toronto Raptors",
-    "UTA": "Utah Jazz",
-    "WAS": "Washington Wizards"
-}
-
-normalizeKeys = [
-    "seasonAverage", 
-    "last7GameAvg", 
-    "restDays", 
-    "opponentPointsAllowed"
-]
 
 def getOpponentPointAllowed(dict):
     teamAverages = getFullTeamStats()
@@ -80,7 +24,7 @@ def playerPositionInfo(position):
 
 def opponentOppgInfo(matchup, teamOppg):
     opponentAbbreviation = matchup[2]
-    opponentName = teamAbbreviations[opponentAbbreviation]
+    opponentName = TEAM_ABBREVIATIONS[opponentAbbreviation]
     opponentOppg = teamOppg[opponentName] # * opponent's oppg for feature
 
     return opponentOppg
@@ -142,13 +86,13 @@ def normalizeData(sb, players, means, stdDevs):
             normalizedFeature = {}
 
             # normalizing and adding weight to continuous values
-            for key in normalizeKeys:
+            for key in NORMALIZE_KEYS:
                 z = (feature[key] - means[key]) / stdDevs[key]
                 normalizedFeature[key] = z
 
             # adding weight to binary values
             for key, value in feature.items():
-                if key not in normalizeKeys:
+                if key not in NORMALIZE_KEYS:
                     normalizedFeature[key] = value
 
             normalizedFeatures.append(normalizedFeature)
@@ -173,21 +117,21 @@ def getMeansAndStdDevs(sb):
     df = convertDataToDataFrame(resp)
 
     # getting means and std deviations for each feature that we're normalizing
-    means = df[normalizeKeys].mean()
-    stdDevs  = df[normalizeKeys].std(ddof=0)
+    means = df[NORMALIZE_KEYS].mean()
+    stdDevs  = df[NORMALIZE_KEYS].std(ddof=0)
     return [resp, means, stdDevs]
 
 def normalizeInput(feature, means, stdDevs):
     normalizedFeature = {}
 
     # normalizing and adding weight to continuous values
-    for key in normalizeKeys:
+    for key in NORMALIZE_KEYS:
         z = (feature[key] - means[key]) / stdDevs[key]
         normalizedFeature[key] = z
 
     # adding weight to binary values
     for key, value in feature.items():
-        if key not in normalizeKeys:
+        if key not in NORMALIZE_KEYS:
             normalizedFeature[key] = value
     
     return normalizedFeature
@@ -221,7 +165,7 @@ def getUserInteractions(sb, averages, user_id):
         "point": data["point_count"] / averages["point"]
     }
 
-def getUserWeights(userId, sb, userInteractions, order):
+def getUserWeights(userId, userInteractions):
     weights = {
         "seasonAverage": 3.00,
         "last7GameAvg": 4.00,
@@ -252,7 +196,7 @@ def getUserWeights(userId, sb, userInteractions, order):
                 weights[category] *= userInteractions[interaction]
 
     orderedWeights = []
-    for category in order:
-        orderedWeights.append(weights[category])
+    for category in FEATURE_ORDER:
+        orderedWeights.append(weights[category] * 0.5) # we only want the user weight to be half of the final weight
 
     return orderedWeights

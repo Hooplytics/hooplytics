@@ -1,18 +1,17 @@
 from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
 from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
-from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getUserInteractions, getInteractionAverages
+from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getInteractionAverages, getUserInteractions
 from predictionModel import trainModel
+from similarUserWeights import getSimilarUserWeights
+from configuration import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, TTL, FEATURE_ORDER
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from datetime import datetime, timedelta, date, timezone
+from datetime import datetime, date, timezone
 from typing import List, Literal
 from supabase import create_client
-from dotenv import load_dotenv
 import numpy as np
 import json
-
-load_dotenv()
 
 app = FastAPI()
 
@@ -27,28 +26,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-TTL = timedelta(hours=24)
-FEATURE_ORDER = [
-    "home",
-    "guard",
-    "center",
-    "forward",
-    "restDays",
-    "season_end",
-    "last7GameAvg",
-    "season_begin",
-    "forward_guard",
-    "guard_forward",
-    "seasonAverage",
-    "season_middle",
-    "center_forward",
-    "forward_center",
-    "opponentPointsAllowed",
-]
 
 @app.on_event("startup")
 async def startup():
@@ -142,18 +119,22 @@ async def predict(request: Request, features: str = Query(..., description="JSON
         user = sb.auth.get_user(jwt)
         user_id = str(user.dict().get("user", {}).get("id"))
 
-        averages = getInteractionAverages()
-        userInteractions = getUserInteractions(sb, averages, user_id)
-        weights = getUserWeights(user_id, sb, userInteractions, FEATURE_ORDER)
+        interactionAverages = getInteractionAverages() # getting the averages for all interaction types
+        userInteractions = getUserInteractions(sb, interactionAverages, user_id) # getting the user's ratios for each interaction type compared to the average
+        userWeights = getUserWeights(user_id, userInteractions) # getting the scaled user weight
+
+        similarWeights = getSimilarUserWeights(user_id, interactionAverages) # getting the scaled weight based on similar users
+
+        finalWeights = [a + b for a, b in zip(userWeights, similarWeights)] # final weight is combined of half of user weight and half of similar weight
     else:
-        weights = getUserWeights(None, sb, None, FEATURE_ORDER)
+        finalWeights = getUserWeights(None, None)
 
     normalizedInput = normalizeInput(featuresDict, app.state.means, app.state.stdDevs)
     orderedFeatures = []
     for key in FEATURE_ORDER:
         orderedFeatures.append(normalizedInput[key])
     x = np.asarray(orderedFeatures, dtype=float)
-    y = app.state.model.predict(x, weights)
+    y = app.state.model.predict(x, finalWeights)
     return y
 
 @app.post("/interaction/{type}")
