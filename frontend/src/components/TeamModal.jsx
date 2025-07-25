@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { getGameData } from "../utils/api"
+import { UserAuth } from "../context/AuthContext"
+import { getGameData, updateInteractionCounts } from "../utils/api"
 import { Tooltip } from "./Tooltip"
 import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
 
@@ -12,6 +13,8 @@ const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 export function TeamModal({ onClose, data, isFav, toggleFav }) {
     const { id, logo_url, name, record, pts, pts_rank, ast, ast_rank, reb, reb_rank, oreb, oreb_rank, blk, blk_rank, stl, stl_rank, tov, tov_rank, fg_pct, fg_pct_rank, fg3_pct, fg3_pct_rank, oppg, oppg_rank, opp_reb, opp_reb_rank, opp_oreb, opp_oreb_rank, opp_tov, opp_tov_rank, opp_fg_pct, opp_fg_pct_rank, opp_fg3_pct, opp_fg3_pct_rank } = data;
     
+    const { session } = UserAuth();
+
     // when tracking which data point we're, we only want to use the x coordinate
     // this makes it easier on the user to not have to hover on each individual point
     const [mouseXPosition, setMouseXPosition] = useState(null);
