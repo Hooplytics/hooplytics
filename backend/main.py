@@ -1,8 +1,8 @@
 from stats import getPlayerSeasonStats, getFullTeamStats, additionalPlayerInfo
 from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upsert, queryGames
-from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getUserInteractions, getInteractionAverages
+from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getInteractionAverages, getUserInteractions
 from predictionModel import trainModel
-from similarUserWeights import getUsers, getFavoriteCountAverage, getSimilarUserWeights
+from similarUserWeights import getSimilarUserWeights
 from configuration import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, TTL, FEATURE_ORDER
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -119,15 +119,11 @@ async def predict(request: Request, features: str = Query(..., description="JSON
         user = sb.auth.get_user(jwt)
         user_id = str(user.dict().get("user", {}).get("id"))
 
-        interactionAverages = getInteractionAverages()
-        userInteractions = getUserInteractions(sb, interactionAverages, user_id)
-        userWeights = getUserWeights(user_id, userInteractions)
-        userWeights = [num * 0.5 for num in userWeights]
+        interactionAverages = getInteractionAverages() # getting the averages for all interaction types
+        userInteractions = getUserInteractions(sb, interactionAverages, user_id) # getting the user's ratios for each interaction type compared to the average
+        userWeights = getUserWeights(user_id, userInteractions) # getting the scaled user weight
 
-        allUsers = getUsers()
-        favoriteAverages = getFavoriteCountAverage(len(allUsers))
-        overrideSb = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) # we need the service role key to override RLS
-        similarWeights = getSimilarUserWeights(overrideSb, user_id, allUsers, favoriteAverages, interactionAverages)
+        similarWeights = getSimilarUserWeights(user_id, interactionAverages) # getting the scaled weight based on similar users
 
         finalWeights = [a + b for a, b in zip(userWeights, similarWeights)] # final weight is combined of half of user weight and half of similar weight
     else:

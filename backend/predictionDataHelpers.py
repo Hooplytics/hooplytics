@@ -197,6 +197,6 @@ def getUserWeights(userId, userInteractions):
 
     orderedWeights = []
     for category in FEATURE_ORDER:
-        orderedWeights.append(weights[category])
+        orderedWeights.append(weights[category] * 0.5) # we only want the user weight to be half of the final weight
 
     return orderedWeights
