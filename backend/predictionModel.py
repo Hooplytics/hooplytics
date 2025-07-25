@@ -15,7 +15,7 @@ class KNN:
         x = np.asarray(x, dtype=float)
         featureWeights = np.array(weights, dtype=float)
         # this speeds up the process rather than using loops
-        weightedDiff = np.abs(self.X_train - x) * (featureWeights)
+        weightedDiff = np.abs(self.X_train - x) * (featureWeights) # adding feature weight to distances
         distances = np.sum(weightedDiff, axis=1) # distances from point to all training data (using manhattan distance to try to drown out outliers)
         kIndex = np.argpartition(distances, self.k)[:self.k] # gets k smallest without caring about order
         return round(float(np.mean(self.y_train[kIndex]))) # average target values of k closest

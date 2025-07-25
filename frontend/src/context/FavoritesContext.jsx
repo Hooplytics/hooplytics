@@ -39,6 +39,7 @@ export function FavoritesProvider({ children }) {
         teams: {}
     });
 
+    // storing favorite ids on whenever a new user logs in or there is an active user on page load
     useEffect(() => {
         if (!user?.id) return;
         (async () => {

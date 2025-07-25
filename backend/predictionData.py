@@ -7,6 +7,7 @@ from supabase import create_client
 import os
 from dotenv import load_dotenv
 
+# calculating feature data for all a given player's games
 def getPlayerFeatureData(player, i, teamOppg):
     values = []
     features = []
@@ -60,7 +61,6 @@ def getPlayerFeatureData(player, i, teamOppg):
 
 def normalizingPredictionData(sb):
     resp, means, stdDevs = getMeansAndStdDevs(sb)
-
     normalizeData(sb, resp.data, means, stdDevs)
 
 def main():

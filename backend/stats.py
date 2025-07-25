@@ -96,7 +96,7 @@ def additionalPlayerInfo(player_id):
 #         additionalData = teaminfocommon.TeamInfoCommon(
 #             team_id=id, 
 #             league_id="00").get_data_frames()[0]
-#         print(additionalData)
+
 #         division   = additionalData["TEAM_DIVISION"].iloc[0]
 #         conference = additionalData["TEAM_CONFERENCE"].iloc[0]
 #         abbreviation       = additionalData["TEAM_ABBREVIATION"].iloc[0]

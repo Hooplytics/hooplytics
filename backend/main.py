@@ -3,10 +3,9 @@ from modalHelpers import playerJson, teamJson, dataExtraction, fetchCache, upser
 from predictionDataHelpers import fetchPredictionData, getMeansAndStdDevs, normalizeInput, getUserWeights, getInteractionAverages, getUserInteractions
 from predictionModel import trainModel
 from similarUserWeights import getSimilarUserWeights
-from configuration import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, TTL, FEATURE_ORDER
+from configuration import SUPABASE_URL, SUPABASE_ANON_KEY, TTL, FEATURE_ORDER
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-import os
 from datetime import datetime, date, timezone
 from typing import List, Literal
 from supabase import create_client
@@ -38,10 +37,11 @@ async def startup():
 async def shutdown():
     pass
 
+# get player or team data to use for the graph
 @app.get("/{entity_type}/{entity_id}/games", response_model=List[dict])
 async def getGameData(entity_type: Literal["player", "team"], entity_id: int, startDate: date = Query(..., alias="startDate"), endDate: date = Query(..., alias="endDate")):
     sb = app.state.sb
-    cutoff = datetime.now(timezone.utc) - TTL
+    cutoff = datetime.now(timezone.utc) - TTL # used to determine if cached data is expired
 
     currEnd = endDate
     currStart = startDate
@@ -54,9 +54,9 @@ async def getGameData(entity_type: Literal["player", "team"], entity_id: int, st
 
     use_cache = ((row) and (datetime.fromisoformat(row["last_fetched"]) > cutoff) and (date.fromisoformat(row["start_date"]) <= startDate) and (date.fromisoformat(row["end_date"]) >= endDate))
     if use_cache:
-        games = row["data"]
+        games = row["data"] # use cached data if not expired and requested time range exists in database
     else:
-        games = await upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart)
+        games = await upsert(sb, entity_type, entity_id, startDate, endDate, currEnd, currStart) # fetch from API if cached data is expired or requested time range exceeds what is in database
 
     # get only the games with dates within the query
     return queryGames(games, startDate, endDate)

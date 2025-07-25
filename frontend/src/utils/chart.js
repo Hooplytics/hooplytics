@@ -2,7 +2,7 @@ const MARGIN_TR = 20; // margin for top and right
 const MARGIN_BL = 40; // margin for bottom and left
 
 const LINE_WIDTH = 2;
-const BLUE_LINE = "#007bff";
+const BLUE = "#007bff"; // used for blue line and circle
 const RED_LINE = "#FF0000";
 const WHITE_CIRCLE = "#FFFFFF"
 
@@ -45,6 +45,7 @@ export const filterRecency = (filterItem, firstGame, lastGame, setStartDate, set
         }
     }
 
+// getting the first interval (whether it be month or week)
 const granularityInitialPeriods = (filterItem, firstGame) => {
         switch (filterItem) {
             case "week":
@@ -56,6 +57,7 @@ const granularityInitialPeriods = (filterItem, firstGame) => {
         }
     }
 
+// going to the next interval period (week or month)
 const granularityPeriodUpdates = (dates, i, start, end, filterItem) => {
         switch (filterItem) {
             case "week":
@@ -71,6 +73,7 @@ const granularityPeriodUpdates = (dates, i, start, end, filterItem) => {
         }
     }
 
+// getting period by period data (week-by-week or month-by-month)
 const granularity = (playerStats, graphOption, filterItem, firstGame) => {
         const stats = playerStats.map(game => game[graphOption]);
         const dates = playerStats.map(game => new Date(game.date));
@@ -97,30 +100,32 @@ const granularity = (playerStats, graphOption, filterItem, firstGame) => {
         return granulatedStats;
 }
 
-
-
 export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct) => {
-    const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame);
-    const dates = playerStats.map(game => game.date);
-    const dataPoints = []
+    const stats = filterOption === "recency" ? playerStats.map(game => game[graphOption]) : granularity(playerStats, graphOption, filterItem, firstGame); // getting all the stats needed to be displayed
+    const dates = playerStats.map(game => game.date); // getting the dates for displayed stats
+    const dataPoints = [] // used to store location of data points
 
     const canvas = canvasRef.current
     const context = canvas.getContext("2d")
 
+    // height and width of overall container
     const containerHeight = canvas.height;
     const containerWidth = canvas.width;
     context.clearRect(0, 0, containerWidth, containerHeight)
 
+    // height and width of actual graph
     const height = containerHeight - MARGIN_TR - MARGIN_BL;
     const width = containerWidth - MARGIN_TR - MARGIN_BL;
-    const xScale = width / (stats.length - 1)
+
+    const xScale = width / (stats.length - 1) // horizontal spacing between each data adjacent data point
     
     const maxY = Math.max(...stats);
-    const yScale = height / maxY;
+    const yScale = height / maxY; // used to determine where along the y-axis to place the data point (ranges from 0 - maxY)
 
     context.save()
-    context.translate(MARGIN_BL, MARGIN_TR)
+    context.translate(MARGIN_BL, MARGIN_TR) // updating our origin point to match the top left of the graph and not the container
 
+    // drawing the axes
     context.beginPath();
     context.moveTo(0, 0);
     context.lineTo(0, height);
@@ -128,28 +133,33 @@ export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPo
     context.stroke();
     context.closePath();
     
+    // drawing the trend lines
+    // lastX and lastY used to move the brush to the previous point without drawing extra lines
     let lastX = 0;
     let lastY = 0;
     context.beginPath();
     stats.forEach((stat, index) => {
         const x = xScale * index;
-        const y = height - (stat * yScale)
+        const y = height - (stat * yScale) // how to calculate position along y-axis
+        // if we're drawing the first point then we want the brush to go to the respective position on the y-axis
+        // else we move to last data point
         if (index === 0) {
             context.moveTo(lastX, y);
         } else {
             context.moveTo(lastX, lastY);
         }
         context.lineTo(x, y);
-        context.arc(x, y, 2, 0, 2 * Math.PI);
+        context.arc(x, y, 2, 0, 2 * Math.PI); // drawing a circle at the data point for visual clarity
         lastX = x;
         lastY = y;
         dataPoints.push({ x: x, y: y });
     });
 
-    context.strokeStyle = BLUE_LINE;
+    context.strokeStyle = BLUE;
     context.lineWidth = LINE_WIDTH;
     context.stroke();
 
+    // used to determine which point is closest the cursor
     let hoveredPoint = { x: null, y: null };
     let closestDistance = 800;
     let closestIndex = null;
@@ -161,8 +171,9 @@ export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPo
         }
     })
 
-    hoveredPointRef.current = { "date": dates[closestIndex], "stat": stats[closestIndex], "point": hoveredPoint };
+    hoveredPointRef.current = { "date": dates[closestIndex], "stat": stats[closestIndex], "point": hoveredPoint }; // getting data for the point we're hovering over
 
+    // only showing hover if we're inside the canvas
     if (isInsideCanvas && hoveredPoint.x >= 0 && hoveredPoint.y >= 0) {
         context.beginPath();
         context.moveTo(hoveredPoint.x, hoveredPoint.y);
@@ -172,6 +183,7 @@ export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPo
         context.stroke();
     }
 
+    // figuring out which statistic we are actually drawing a graph for
     context.beginPath();
     let statAverage;
     switch (graphOption) {
@@ -200,12 +212,15 @@ export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPo
             statAverage = fg3_pct;
             break;
     }
+
+    // drawing a line at the statistic average
     context.moveTo(0, height - (statAverage * yScale));
     context.lineTo(width, height - (statAverage * yScale));
     context.strokeStyle = RED_LINE;
     context.lineWidth = LINE_WIDTH;
     context.stroke();
 
+    // creating the markers on the y-axis
     context.font = "16px Arial";
     context.fillStyle = "white";
     context.fillText(0, -25, height + 5);
@@ -216,6 +231,7 @@ export const createGraph = (canvasRef, isInsideCanvas, mouseXPosition, hoveredPo
 
     context.restore();
 
+    // return information to use for hover tooltip
     return {
         show: hoveredPoint.x !== null && hoveredPoint.y !== null,
         x: hoveredPoint.x,

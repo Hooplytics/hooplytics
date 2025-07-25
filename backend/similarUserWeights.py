@@ -21,7 +21,7 @@ def getSimilarUserWeights(activeUser, interactionAverages):
     for currUser in users:
         if currUser == activeUser:
             continue
-        
+
         # getting necessary variables for all users that are not the currently logged in user
         currPlayers, currTeams, currCities, currStates, currDivisions, currConferences, currPositions, currPlayerTeams, currPoints, currFavoriteRatio, currUserInteractions, currUserTotalInteractionsRatio = getUserValues(currUser, sb, interactionAverages, favoriteCountAverage)
 
@@ -30,7 +30,7 @@ def getSimilarUserWeights(activeUser, interactionAverages):
         playerHeuristics.append(calculatePlayerHeuristic(activePlayers, activePoints, activePositions, activePlayerTeams, currPlayers, currPoints, currPositions, currPlayerTeams))
         usageHeuristics.append(calculateUsageHeuristic(activeFavoriteRatio, activeUserTotalInteractionsRatio, currFavoriteRatio, currUserTotalInteractionsRatio))
         interactionHeuristics.append(calculateInteractionHeuristic(activeUserInteractions, currUserInteractions))
-    
+
     # normalizing all the heuristic values for each user
     normalizedTeamHeuristics = normalizeArrayData(teamHeuristics)
     normalizedPlayerHeuristics = normalizeArrayData(playerHeuristics)
@@ -137,36 +137,15 @@ def calculatePlayerHeuristic(activePlayers, activePoints, activePositions, activ
     elif len(similarPlayerTeams) == 1:
         return ONE_SIMILAR_PLAYER_TEAM[1]
     
+    return 0
+
 # calculating the points value based on similar usages (interaction and favorite counts)
 def calculateUsageHeuristic(activeFavoriteRatio, activeUserTotalInteractionsRatio, currFavoriteRatio, currUserTotalInteractionsRatio):
     # calculating the ratio category for active user and non-active user for both favorite and interaction total
-    if activeFavoriteRatio > 1.25:
-        activeFavoriteCategory = "high"
-    elif activeFavoriteRatio < 0.75:
-        activeFavoriteCategory = "low"
-    else:
-        activeFavoriteCategory = "average"
-
-    if currFavoriteRatio > 1.25:
-        currFavoriteCategory = "high"
-    elif currFavoriteRatio < 0.75:
-        currFavoriteCategory = "low"
-    else:
-        currFavoriteCategory = "average"
-
-    if activeUserTotalInteractionsRatio > 1.25:
-        activeUserTotalInteractionCategory = "high"
-    elif activeUserTotalInteractionsRatio < 0.75:
-        activeUserTotalInteractionCategory = "low"
-    else:
-        activeUserTotalInteractionCategory = "average"
-
-    if currUserTotalInteractionsRatio > 1.25:
-        currUserTotalInteractionCategory = "high"
-    elif currUserTotalInteractionsRatio < 0.75:
-        currUserTotalInteractionCategory = "low"
-    else:
-        currUserTotalInteractionCategory = "average"
+    activeFavoriteCategory = getInteractionCategory(activeFavoriteRatio)
+    currFavoriteCategory = getInteractionCategory(currFavoriteRatio)
+    activeUserTotalInteractionCategory = getInteractionCategory(activeUserTotalInteractionsRatio)
+    currUserTotalInteractionCategory = getInteractionCategory(currUserTotalInteractionsRatio)
 
     # determining total points based on similarity or neighboring categories for both favorite and total interaction
     points = 0
@@ -186,19 +165,8 @@ def calculateInteractionHeuristic(activeUserInteractions, currUserInteractions):
     points = 0
     # getting total interaction points based on similar or neighboring category for each interaction type
     for category in activeUserInteractions:
-        if activeUserInteractions[category] > 1.25:
-            activeUserInteractionsCategory = "high"
-        elif activeUserInteractions[category] < 0.75:
-            activeUserInteractionsCategory = "low"
-        else:
-            activeUserInteractionsCategory = "average"
-
-        if currUserInteractions[category] > 1.25:
-            currUserInteractionsCategory = "high"
-        elif currUserInteractions[category] < 0.75:
-            currUserInteractionsCategory = "low"
-        else:
-            currUserInteractionsCategory = "average"
+        activeUserInteractionsCategory = getInteractionCategory(activeUserInteractions[category])
+        currUserInteractionsCategory = getInteractionCategory(currUserInteractions[category])
 
         if activeUserInteractionsCategory == currUserInteractionsCategory:
             points += SIMILAR_INTERACTION[1]
@@ -306,3 +274,11 @@ def getUsers():
         userIds.append(user["id"])
     
     return userIds
+
+def getInteractionCategory(ratio):
+    if ratio > 1.25:
+        return "high"
+    elif ratio < 0.75:
+        return "low"
+    else:
+        return "average"
