@@ -18,4 +18,19 @@ describe('sign up page', () => {
     cy.get('[data-cy="submit"]').click();  
     cy.url().should('match', /\/profile$/);
   })
+
+  it("should get an error when trying to sign up an already existing user", () => {
+    cy.visit('http://localhost:5173/signup');
+
+    cy.on('window:alert', (text) => {
+      expect(text).to.equal('An error occurred signing up.');
+    });
+
+    cy.get('[data-cy="email"]').type("test@gmail.com");
+    cy.get('[data-cy="username"]').type("test name");
+    cy.get('[data-cy="password"]').type("testpassword");
+    cy.get('[data-cy="submit"]').click();
+
+    cy.url().should('not.include', '/profile');
+  })
 });
