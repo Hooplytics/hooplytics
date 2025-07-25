@@ -1,68 +1,42 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
-import { UserAuth } from "../context/AuthContext"
-import { getGameData, getPointsPrediction, updateInteractionCounts} from "../utils/api"
+import { getPointsPrediction, updateInteractionCounts} from "../utils/api"
 import { Tooltip } from "./Tooltip"
-import { filterRecency, createGraph } from "../utils/chart";
 import { handleMouseMove, handleMouseDown, handleMouseUp, handleCanvasClick } from "../utils/utils"
 import { Loader } from "./Loader";
+import { useRecencyFilter } from "../../hooks/useRecencyFilter";
+import { useGraph } from "../../hooks/useGraph";
+import { useStatsLoader } from "../../hooks/useStatsLoader";
+import { useFindBoundaryGames } from "../../hooks/useFindBoundaryGames";
+import { useUpdateInteractionCounts } from "../../hooks/useUpdateInteractionCounts";
+import { useModelVars } from "../../hooks/useModelVars";
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
 
-    const { session } = UserAuth();
-
-    // when tracking which data point we're, we only want to use the x coordinate
-    // this makes it easier on the user to not have to hover on each individual point
-    const [mouseXPosition, setMouseXPosition] = useState(null);
-    const hoveredPointRef = useRef({});
+    const {
+        session,
+        mouseXPosition, setMouseXPosition,
+        hoveredPointRef,
+        graphOption, setGraphOption, 
+        filterOption, setFilterOption,
+        filterItem, setFilterItem,
+        firstGame, setFirstGame,
+        lastGame, setLastGame,
+        canvasRef,
+        draggingRef,
+        justDraggedRef,
+        startXRef,
+        isInsideCanvas, setIsInsideCanvas
+    } = useModelVars()
 
     const [loading, setLoading] = useState(false);
 
-    const [graphOption, setGraphOption] = useState("points");
-    const [playerStats, setPlayerStats] = useState([]);
-    const [filterOption, setFilterOption] = useState("recency") // recency vs grouping
-    const [filterItem, setFilterItem] = useState("month") // which timeline to group or filter by
-
-    const earliestPossibleStart = new Date(Date.UTC(2024, 9, 15, 0, 0, 0));
-    const latestPossibleEnd = new Date(Date.UTC(2025, 3, 15, 0, 0, 0));
-    const today = new Date();
-
-    const [startDate, setStartDate] = useState(); // the beginning date for the range to query
-    const [endDate, setEndDate] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); // the ending date for the range to query
-    const [firstGame, setFirstGame] = useState(earliestPossibleStart); // the date of the first game (setting as state otherwise value won't save)
-    const [lastGame, setLastGame] = useState(today <= latestPossibleEnd ? today : latestPossibleEnd); //  the date of the last game (setting as state otherwise value won't save)
-    const [foundFirst, setFoundFirst] = useState(false);
-    const [foundLast, setFoundLast] = useState(false);
     const [calculatedFeatures, setCalculatedFeatures] = useState(false); // (setting as state otherwise value won't save)
     const [predictedPoints, setPredictedPoints] = useState(null); // (setting as state otherwise value won't save)
 
-    const canvasRef = useRef(null);
-    const draggingRef = useRef(false); // helps us determine if we are able to drag (can only drag if we are in a week view)
-    const justDraggedRef = useRef(false); // helps us determine if we did drag or if we clicked
-    const startXRef = useRef(null);
-    const [isInsideCanvas, setIsInsideCanvas] = useState(false);
-
-    const [tooltipData, setTooltipData] = useState({}); // data to be shown on graph for tooltip
-    // doing this so that the tooltip position adjusts to where the data point is
-    const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
-                                position: "absolute",
-                                left: tooltipData?.x + 330 || null,
-                                top: tooltipData?.y + 60 || null,
-                                background: "#222",
-                                color: "#fff",
-                                padding: "7px",
-                                borderRadius: "6px",
-                                fontSize: "12px",
-                                zIndex: 5
-                            }}>
-                            <div><strong>Date:</strong> {tooltipData.date}</div>
-                            <div><strong>{graphOption}:</strong> {tooltipData?.value?.toFixed(0)}</div>
-                        </div>
-
-    // features dict that I will use to predict scores
     const [features, setFeatures] = useState({
         "home": false,
         "guard": position == "Guard",
@@ -116,75 +90,41 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
 
     // effect for changing recency
     // want this to run on model load and shoot anytime the recency item changes or the filter option changes
-    useEffect(() => {
-        filterOption === "recency" ? filterRecency(filterItem, firstGame, lastGame, setStartDate, setEndDate): undefined;
-    }, [id, filterItem, filterOption])
+    // the beginning and ending date for the range to query
+    const { startDate, endDate, setStartDate, setEndDate } = useRecencyFilter(id, filterOption, filterItem, firstGame, lastGame);
     
     // only want to load new stats whenever the date range changes
-    useEffect(() => {
-        const loadStats = async () => {
-            const stats = await getGameData("player", id, startDate, endDate);
-            setPlayerStats(stats.reverse());
-        }
-        if (!startDate) return;
-        loadStats();
-    }, [startDate, endDate])
+    const playerStats = useStatsLoader("player", id, startDate, endDate);
     
     // changing what the graph looks like either when the date range changes, the filter option changes, or the tool tip data changes (for tooltip and hover animation)
-    // not using mouse position because mouse can change infinitesmely but not change the hovered point
-    useEffect(() => {
-        const tooltip = createGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
-        // doing this to prevent infinite effect shoots
-        if (tooltip !== tooltipData) {
-            setTooltipData(tooltip);
-        }
-        // trying to get the date of the last game
-        // don't want to do this again after finding last game
-        // should only run on model load and never again
-        if (playerStats.length > 0 && !foundLast) {
-            setFoundLast(true);
-            setLastGame(new Date(playerStats[playerStats.length - 1].date));
-            setEndDate(new Date(playerStats[playerStats.length - 1].date));
-        }
-    }, [playerStats, graphOption, filterOption, filterItem, tooltipData])
+    // data to be shown on graph for tooltip
+    const tooltipData = useGraph(canvasRef, isInsideCanvas, mouseXPosition, hoveredPointRef, playerStats, firstGame, filterItem, filterOption, graphOption, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct);
+    // doing this so that the tooltip position adjusts to where the data point is
+    const GRAPH_TOOLTIP = <div className="canvas-tooltip" style={{
+                                position: "absolute",
+                                left: tooltipData.x + 330,
+                                top: tooltipData.y + 60,
+                                background: "#222",
+                                color: "#fff",
+                                padding: "7px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                zIndex: 5
+                            }}>
+                            <div><strong>Date:</strong> {tooltipData.date}</div>
+                            <div><strong>{graphOption}:</strong> {tooltipData?.value?.toFixed(0)}</div>
+                        </div>
+
+    useFindBoundaryGames(playerStats, filterOption, filterItem, setStartDate, setEndDate, setFirstGame, setLastGame);
+    useUpdateInteractionCounts(session, startDate, endDate, filterOption, filterItem, isInsideCanvas, tooltipData);
 
     useEffect(() => {
-        // want to find the date of the first game
-        // we can only confidently say that we have the first game in our date range if we are querying season data
-        if (playerStats.length > 0 && !foundFirst && (filterOption === "granularity" || filterItem === "season")) {
-            setFoundFirst(true);
-            setFirstGame(new Date(playerStats[0].date));
-            setStartDate(new Date(playerStats[0].date));
-        }
-
-        // want to get values to use for prediction model
-        // should only run on model load
         if (playerStats.length > 0 && !calculatedFeatures) {
             getLast7GameAvg();
             getOpponentPointsAllowed();
             setCalculatedFeatures(true);
         }
     }, [playerStats])
-
-    // only want to update if we are hovering inside of the graph
-    // updates on point hover change
-    useEffect(() => {
-        if (isInsideCanvas) {
-            updateInteractionCounts("point", session);
-        }
-    }, [tooltipData?.date])
-
-    // update date interaction count whenever the date range changes or filter option changes
-    useEffect(() => {
-        // prevent multiple shoots on page load
-        const handler = setTimeout(() => {
-            if (session && startDate && endDate) {
-                updateInteractionCounts("date", session);
-            }
-        }, 500);
-
-        return () => clearTimeout(handler);
-    }, [startDate, endDate, filterOption])
 
     return (
         <div className="modal">
