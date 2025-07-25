@@ -21,7 +21,7 @@ def getSimilarUserWeights(activeUser, interactionAverages):
     for currUser in users:
         if currUser == activeUser:
             continue
-        
+
         # getting necessary variables for all users that are not the currently logged in user
         currPlayers, currTeams, currCities, currStates, currDivisions, currConferences, currPositions, currPlayerTeams, currPoints, currFavoriteRatio, currUserInteractions, currUserTotalInteractionsRatio = getUserValues(currUser, sb, interactionAverages, favoriteCountAverage)
 
@@ -30,7 +30,7 @@ def getSimilarUserWeights(activeUser, interactionAverages):
         playerHeuristics.append(calculatePlayerHeuristic(activePlayers, activePoints, activePositions, activePlayerTeams, currPlayers, currPoints, currPositions, currPlayerTeams))
         usageHeuristics.append(calculateUsageHeuristic(activeFavoriteRatio, activeUserTotalInteractionsRatio, currFavoriteRatio, currUserTotalInteractionsRatio))
         interactionHeuristics.append(calculateInteractionHeuristic(activeUserInteractions, currUserInteractions))
-    
+
     # normalizing all the heuristic values for each user
     normalizedTeamHeuristics = normalizeArrayData(teamHeuristics)
     normalizedPlayerHeuristics = normalizeArrayData(playerHeuristics)
@@ -137,6 +137,8 @@ def calculatePlayerHeuristic(activePlayers, activePoints, activePositions, activ
     elif len(similarPlayerTeams) == 1:
         return ONE_SIMILAR_PLAYER_TEAM[1]
     
+    return 0
+
 # calculating the points value based on similar usages (interaction and favorite counts)
 def calculateUsageHeuristic(activeFavoriteRatio, activeUserTotalInteractionsRatio, currFavoriteRatio, currUserTotalInteractionsRatio):
     # calculating the ratio category for active user and non-active user for both favorite and interaction total
