@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../App.css"
 import { getPointsPrediction, updateInteractionCounts} from "../utils/api"
@@ -12,6 +11,7 @@ import { useStatsLoader } from "../../hooks/useStatsLoader";
 import { useFindBoundaryGames } from "../../hooks/useFindBoundaryGames";
 import { useUpdateInteractionCounts } from "../../hooks/useUpdateInteractionCounts";
 import { useModelVars } from "../../hooks/useModelVars";
+import { Graph } from "./Graph";
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
@@ -164,57 +164,33 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     <button onClick={getPredictedPoints}>Predict next game points</button>
                     {calculatedFeatures && predictedPoints && <p>Predicted points for next game: <strong>{predictedPoints}</strong></p>}
                 </div>
-                <div className="chart-wrapper">
-                    <select className="graph-select" onChange={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setGraphOption(e.target.value);
-                    }}>
-                        <option value="points">Points</option>
-                        <option value="assists">Assists</option>
-                        <option value="rebounds">Rebounds</option>
-                        <option value="blocks">Blocks</option>
-                        <option value="steals">Steals</option>
-                        <option value="turnovers">Turnovers</option>
-                        <option value="fg_pct">Field Goal %</option>
-                        <option value="3pt_pct">3pt %</option>
-                    </select>
-                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={(e) => handleMouseMove(e, setMouseXPosition)} onMouseDown={(e) => handleMouseDown(e, startDate, endDate, draggingRef, startXRef, canvasRef)} onMouseUp={(e) => handleMouseUp(e, startXRef, draggingRef, justDraggedRef, canvasRef, startDate, endDate, setStartDate, setEndDate, setFilterItem)} id="canvas" onClick={() => handleCanvasClick(canvasRef, justDraggedRef, hoveredPointRef, setStartDate, setEndDate, setFilterItem)} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
-                    {isInsideCanvas && tooltipData.show && GRAPH_TOOLTIP}
-                </div>
-                <div className="graph-filter-by">
-                    <select className="filter" onChange={(e) => {
-                        e.preventDefault();
-                        setFilterOption(e.target.value);
-                        if (e.target.value === "granularity") {
-                            setStartDate(firstGame);
-                            setEndDate(lastGame);
-                            if (filterItem === "season") setFilterItem("month");
-                        }
-                    }}>
-                        <option default value="recency">Recency</option>
-                        <option value="granularity" >Granularity</option>
-                    </select>
-                    <select className="filter" value={filterItem} onChange={(e) => {
-                            e.preventDefault();
-                            setFilterItem(e.target.value);
-                        }}>
-                        {filterOption === "recency" && <option value="season">Full Season</option>}
-                        <option value="month">{ filterOption === "recency" ? "Last Month" : "Monthly" }</option>
-                        <option value="week">{filterOption === "recency" ? "Last Week" : "Weekly"}</option>
-                        {filterOption === "recency" && <option value="custom">Custom</option>}
-                    </select>
-                    {startDate && endDate && filterOption === "recency" && <div className="custom-dates">
-                        <span>
-                            <p>Start Date: </p>
-                            <DatePicker selected={startDate} onChange={(date) => { setStartDate(date); setFilterItem("custom")}} placeholderText="Select a start date" minDate={firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy"/>
-                        </span>
-                        <span>
-                            <p>End Date: </p>
-                            <DatePicker selected={endDate} onChange={(date) => { setEndDate(date);  setFilterItem("custom")}} placeholderText="Select a end date" minDate={startDate || firstGame} maxDate={lastGame} dateFormat="MMMM dd, yyyy" />
-                        </span>
-                    </div>}
-                </div>
+                <Graph
+                    handleMouseMove={handleMouseMove}
+                    handleMouseDown={handleMouseDown}
+                    handleMouseUp={handleMouseUp}
+                    setMouseXPosition={setMouseXPosition}
+                    draggingRef={draggingRef}
+                    justDraggedRef={justDraggedRef}
+                    hoveredPointRef={hoveredPointRef}
+                    startXRef={startXRef}
+                    handleCanvasClick={handleCanvasClick}
+                    canvasRef={canvasRef}
+                    isInsideCanvas={isInsideCanvas}
+                    setIsInsideCanvas={setIsInsideCanvas}
+                    tooltipData={tooltipData}
+                    graphTooltip={GRAPH_TOOLTIP}
+                    setGraphOption={setGraphOption}
+                    filterOption={filterOption}
+                    setFilterOption={setFilterOption}
+                    filterItem={filterItem}
+                    setFilterItem={setFilterItem}
+                    startDate={startDate}
+                    endDate={endDate}
+                    firstGame={firstGame}
+                    lastGame={lastGame}
+                    setStartDate={setStartDate}
+                    setEndDate={setEndDate}
+                />
                 {loading && <Loader/>}
             </div>
         </div>
