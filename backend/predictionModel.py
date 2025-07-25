@@ -1,8 +1,6 @@
+from configuration import SUPABASE_URL, SUPABASE_ANON_KEY
 import numpy as np
 import pandas as pd
-from collections import Counter
-import os
-from dotenv import load_dotenv
 from supabase import create_client
 
 class KNN:
@@ -41,10 +39,6 @@ def trainModel(data, k):
 
 # * Uncomment this to test the model
 # def main():
-#     load_dotenv()
-#     SUPABASE_URL    = os.getenv("SUPABASE_URL")
-#     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
-
 #     sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 #     resp = sb.from_("normalized_data")\
 #         .select("features, targets")\

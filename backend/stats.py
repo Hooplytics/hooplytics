@@ -1,5 +1,7 @@
-from nba_api.stats.endpoints import commonplayerinfo, leaguedashplayerstats, leaguedashteamstats, playergamelog, teamgamelog, commonteamroster
+from nba_api.stats.endpoints import commonplayerinfo, teaminfocommon, leaguedashplayerstats, leaguedashteamstats, playergamelog, teamgamelog
 from nba_api.stats.static import teams
+from supabase import create_client
+from configuration import SUPABASE_URL, SUPABASE_ANON_KEY
 from functools import lru_cache
 
 currSeason = '2024-25'
@@ -80,3 +82,38 @@ def additionalPlayerInfo(player_id):
         "height":   height_formatted,
         "weight":   info_df["WEIGHT"].iat[0],
     }
+
+# * UNCOMMENT THIS TO UPDATE NBA TEAM CHARACTERISTICS
+# def loadNbaTeams():
+#     sb = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+#     teamData = teams.get_teams()
+#     for team in teamData[28:]:
+#         id = team["id"]
+#         city = team["city"]
+#         state = team["state"]
+
+#         additionalData = teaminfocommon.TeamInfoCommon(
+#             team_id=id, 
+#             league_id="00").get_data_frames()[0]
+#         print(additionalData)
+#         division   = additionalData["TEAM_DIVISION"].iloc[0]
+#         conference = additionalData["TEAM_CONFERENCE"].iloc[0]
+#         abbreviation       = additionalData["TEAM_ABBREVIATION"].iloc[0]
+
+#         sb.from_("nba_teams")\
+#             .upsert({
+#                 "id": id,
+#                 "abbreviation": abbreviation,
+#                 "city": city,
+#                 "state": state,
+#                 "division": division,
+#                 "conference": conference
+#                 }, on_conflict="id")\
+#             .execute()
+
+# def main():
+#     loadNbaTeams()
+
+# if __name__ == "__main__":
+#     main()
