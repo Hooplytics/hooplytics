@@ -5,11 +5,9 @@ import "../App.css"
 import { UserAuth } from "../context/AuthContext"
 import { getGameData, getPointsPrediction, updateInteractionCounts} from "../utils/api"
 import { Tooltip } from "./Tooltip"
-import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
+import { filterRecency, createGraph } from "../utils/chart";
+import { handleMouseMove, handleMouseDown, handleMouseUp, handleCanvasClick } from "../utils/utils"
 import { Loader } from "./Loader";
-
-const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
-const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
 
 export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     const { id, image_url, name, team, position, age, height, weight, pts, ast, reb, blk, stl, tov, fg_pct, fg3_pct } = data;
@@ -116,46 +114,6 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
         updateInteractionCounts("point", session);
     }
 
-    const handleMouseMove = (e) => {
-        setMouseXPosition(e.clientX - MOUSE_OFFSET);
-    }
-
-    const handleMouseDown = (e) => {
-        if (isWeekRange(startDate, endDate)) {
-            draggingRef.current = true;
-            startXRef.current = e.clientX;
-            const canvas = canvasRef.current;
-            canvas.style.cursor = "grabbing";
-        }
-    }
-
-    const handleMouseUp = (e) => {
-        const difference = e.clientX - startXRef.current;
-        if (difference < -DRAG_THRESHOLD && draggingRef.current) {
-            justDraggedRef.current = true; 
-            centerWeek(endDate, setStartDate, setEndDate, setFilterItem);
-        } else if (difference > DRAG_THRESHOLD && draggingRef.current) {
-            justDraggedRef.current = true; 
-            centerWeek(startDate, setStartDate, setEndDate, setFilterItem);
-        }
-        draggingRef.current = false;
-        const canvas = canvasRef.current;
-        canvas.style.cursor = "default";
-    }
-
-    const handleCanvasClick = () => {
-        const canvas = canvasRef.current;
-        canvas.style.cursor = "default";
-        if (justDraggedRef.current) {
-            justDraggedRef.current = false;
-            return;
-        } else {
-            if (hoveredPointRef.current?.date) {
-                centerWeek(hoveredPointRef.current.date, setStartDate, setEndDate, setFilterItem)
-            }
-        }
-    }
-
     // effect for changing recency
     // want this to run on model load and shoot anytime the recency item changes or the filter option changes
     useEffect(() => {
@@ -231,7 +189,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     return (
         <div className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} onMouseMove={handleMouseMove}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <p className="close-modal" onClick={onClose}>&times;</p>
                 <img className="modal-heart" src={isFav ? "/heart.png" : "empty-heart.png"} onClick={toggleFav} />
                 <div className="player-header">
@@ -281,7 +239,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         <option value="fg_pct">Field Goal %</option>
                         <option value="3pt_pct">3pt %</option>
                     </select>
-                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
+                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={(e) => handleMouseMove(e, setMouseXPosition)} onMouseDown={(e) => handleMouseDown(e, startDate, endDate, draggingRef, startXRef, canvasRef)} onMouseUp={(e) => handleMouseUp(e, startXRef, draggingRef, justDraggedRef, canvasRef, startDate, endDate, setStartDate, setEndDate, setFilterItem)} id="canvas" onClick={() => handleCanvasClick(canvasRef, justDraggedRef, hoveredPointRef, setStartDate, setEndDate, setFilterItem)} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
                     {isInsideCanvas && tooltipData.show && GRAPH_TOOLTIP}
                 </div>
                 <div className="graph-filter-by">

@@ -5,10 +5,8 @@ import "../App.css"
 import { UserAuth } from "../context/AuthContext"
 import { getGameData, updateInteractionCounts } from "../utils/api"
 import { Tooltip } from "./Tooltip"
-import { filterRecency, createGraph, centerWeek, isWeekRange } from "../utils/chart";
-
-const MOUSE_OFFSET = 510 // 520 is the distance of error from the mouse and the points
-const DRAG_THRESHOLD = 30 // we want drags to be somewhat significant
+import { filterRecency, createGraph } from "../utils/chart";
+import { handleMouseMove, handleMouseDown, handleMouseUp, handleCanvasClick } from "../utils/utils"
 
 export function TeamModal({ onClose, data, isFav, toggleFav }) {
     const { id, logo_url, name, record, pts, pts_rank, ast, ast_rank, reb, reb_rank, oreb, oreb_rank, blk, blk_rank, stl, stl_rank, tov, tov_rank, fg_pct, fg_pct_rank, fg3_pct, fg3_pct_rank, oppg, oppg_rank, opp_reb, opp_reb_rank, opp_oreb, opp_oreb_rank, opp_tov, opp_tov_rank, opp_fg_pct, opp_fg_pct_rank, opp_fg3_pct, opp_fg3_pct_rank } = data;
@@ -67,46 +65,6 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
         if (j === 3 && k !== 13) return `${rank}rd`;
         
         return `${rank}th`;
-    }
-
-    const handleMouseMove = (e) => {
-        setMouseXPosition(e.clientX - MOUSE_OFFSET);
-    }
-    
-    const handleMouseDown = (e) => {
-        if (isWeekRange(startDate, endDate)) {
-            draggingRef.current = true;
-            startXRef.current = e.clientX;
-            const canvas = canvasRef.current;
-            canvas.style.cursor = "grabbing";
-        }
-    }
-
-    const handleMouseUp = (e) => {
-        const difference = e.clientX - startXRef.current;
-        if (difference < -DRAG_THRESHOLD && draggingRef.current) {
-            justDraggedRef.current = true; 
-            centerWeek(endDate, setStartDate, setEndDate, setFilterItem);
-        } else if (difference > DRAG_THRESHOLD && draggingRef.current) {
-            justDraggedRef.current = true; 
-            centerWeek(startDate, setStartDate, setEndDate, setFilterItem);
-        }
-        draggingRef.current = false;
-        const canvas = canvasRef.current;
-        canvas.style.cursor = "default";
-    }
-
-    const handleCanvasClick = () => {
-        const canvas = canvasRef.current;
-        canvas.style.cursor = "default";
-        if (justDraggedRef.current) {
-            justDraggedRef.current = false;
-            return;
-        } else {
-            if (hoveredPointRef.current?.date) {
-                centerWeek(hoveredPointRef.current.date, setStartDate, setEndDate, setFilterItem)
-            }
-        }
     }
     
      // effect for changing recency
@@ -227,7 +185,7 @@ export function TeamModal({ onClose, data, isFav, toggleFav }) {
                         <option value="fg_pct">Field Goal %</option>
                         <option value="3pt_pct">3pt %</option>
                     </select>
-                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={handleMouseMove} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} id="canvas" onClick={() => handleCanvasClick()} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
+                    <canvas ref={canvasRef} width={800} height={450} onMouseMove={(e) => handleMouseMove(e, setMouseXPosition)} onMouseDown={(e) => handleMouseDown(e, startDate, endDate, draggingRef, startXRef, canvasRef)} onMouseUp={(e) => handleMouseUp(e, startXRef, draggingRef, justDraggedRef, canvasRef, startDate, endDate, setStartDate, setEndDate, setFilterItem)} id="canvas" onClick={() => handleCanvasClick(canvasRef, justDraggedRef, hoveredPointRef, setStartDate, setEndDate, setFilterItem)} onMouseEnter={() => setIsInsideCanvas(true)} onMouseLeave={() => setIsInsideCanvas(false)}/>
                     {isInsideCanvas && tooltipData.show && GRAPH_TOOLTIP}
                 </div>
                 <div className="graph-filter-by">
