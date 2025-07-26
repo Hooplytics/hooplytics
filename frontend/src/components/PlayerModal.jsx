@@ -144,8 +144,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         </div>
                         <div className="player-stats">
                             <div className="player-stats-column">
-                                <Tooltip text="Points per game"><p data-cy="modal-pts">PTS: {pts.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Assists per game"><p data-cy="modal-ast">AST: {ast.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Points per game"><p>PTS: {pts.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Assists per game"><p>AST: {ast.toFixed(1)}</p></Tooltip>
                                 <Tooltip text="Rebounds per game"><p>REB: {reb.toFixed(1)}</p></Tooltip>
                             </div>
                             <div className="player-stats-column">
@@ -161,8 +161,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     </div>
                 </div>
                 <div className="predicted-points">
-                    <button onClick={getPredictedPoints}>Predict next game points</button>
-                    {calculatedFeatures && predictedPoints && <p>Predicted points for next game: <strong>{predictedPoints}</strong></p>}
+                    <button data-cy="prediction-button" onClick={getPredictedPoints}>Predict next game points</button>
+                    {calculatedFeatures && predictedPoints && <p data-cy="predicted-points">Predicted points for next game: <strong>{predictedPoints}</strong></p>}
                 </div>
                 <Graph
                     handleMouseMove={handleMouseMove}
