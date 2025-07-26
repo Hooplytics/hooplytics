@@ -27,6 +27,7 @@ export function HomePage() {
     useEffect(() => {
         if (!searchQuery) {
             setDisplayData([]);
+            setFilteredData([]);
         }
     }, [searchQuery])
 
