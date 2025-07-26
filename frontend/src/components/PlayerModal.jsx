@@ -127,7 +127,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [playerStats])
 
     return (
-        <div className="modal">
+        <div data-cy="player-modal" className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <p className="close-modal" onClick={onClose}>&times;</p>
@@ -136,7 +136,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     <img src={image_url} />
                     <div className="player-info">
                         <div className="player-metrics">
-                            <h3>{name} | {team} </h3>
+                            <h3 data-cy="modal-name">{name} | {team} </h3>
                             <h6>{position}</h6>
                             <h6><strong>Age:</strong> {age}</h6>
                             <h6><strong>Height:</strong> {height}</h6>
@@ -161,8 +161,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     </div>
                 </div>
                 <div className="predicted-points">
-                    <button onClick={getPredictedPoints}>Predict next game points</button>
-                    {calculatedFeatures && predictedPoints && <p>Predicted points for next game: <strong>{predictedPoints}</strong></p>}
+                    <button data-cy="prediction-button" onClick={getPredictedPoints}>Predict next game points</button>
+                    {calculatedFeatures && predictedPoints && <p data-cy="predicted-points">Predicted points for next game: <strong>{predictedPoints}</strong></p>}
                 </div>
                 <Graph
                     handleMouseMove={handleMouseMove}

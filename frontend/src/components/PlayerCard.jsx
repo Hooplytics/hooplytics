@@ -29,9 +29,9 @@ export function PlayerCard({ data }) {
 
     return (
         <div>
-            <div className="search-card" onClick={handleShowModal}>
+            <div data-cy={`player-card-${data.name}`} className="search-card" onClick={handleShowModal}>
                 {session && (<Tooltip text={isFav ? "Unfavorite player" : "Favorite player"} >
-                        <img src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle} />
+                        <img data-cy="favorite" src="/heart.png" className={isFav ? "active card-heart" : "card-heart"} onClick={handleToggle} />
                     </Tooltip>)
                 }
                 <img src={data.image_url} />
