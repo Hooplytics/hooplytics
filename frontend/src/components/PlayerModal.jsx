@@ -127,7 +127,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
     }, [playerStats])
 
     return (
-        <div className="modal">
+        <div data-cy="player-modal" className="modal">
             <div className="modal-overlay" onClick={onClose}></div>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <p className="close-modal" onClick={onClose}>&times;</p>
@@ -136,7 +136,7 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                     <img src={image_url} />
                     <div className="player-info">
                         <div className="player-metrics">
-                            <h3>{name} | {team} </h3>
+                            <h3 data-cy="modal-name">{name} | {team} </h3>
                             <h6>{position}</h6>
                             <h6><strong>Age:</strong> {age}</h6>
                             <h6><strong>Height:</strong> {height}</h6>
@@ -144,8 +144,8 @@ export function PlayerModal({ onClose, data, isFav, toggleFav }) {
                         </div>
                         <div className="player-stats">
                             <div className="player-stats-column">
-                                <Tooltip text="Points per game"><p>PTS: {pts.toFixed(1)}</p></Tooltip>
-                                <Tooltip text="Assists per game"><p>AST: {ast.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Points per game"><p data-cy="modal-pts">PTS: {pts.toFixed(1)}</p></Tooltip>
+                                <Tooltip text="Assists per game"><p data-cy="modal-ast">AST: {ast.toFixed(1)}</p></Tooltip>
                                 <Tooltip text="Rebounds per game"><p>REB: {reb.toFixed(1)}</p></Tooltip>
                             </div>
                             <div className="player-stats-column">

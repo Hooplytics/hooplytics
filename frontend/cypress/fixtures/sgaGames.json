@@ -1,0 +1,112 @@
+[
+  {
+    "date": "APR 08, 2025",
+    "blocks": 1,
+    "fg_pct": 53.800000000000004,
+    "points": 42,
+    "steals": 0,
+    "3pt_pct": 55.60000000000001,
+    "assists": 6,
+    "rebounds": 6,
+    "turnovers": 1
+  },
+  {
+    "date": "APR 06, 2025",
+    "blocks": 1,
+    "fg_pct": 52.2,
+    "points": 26,
+    "steals": 1,
+    "3pt_pct": 40,
+    "assists": 9,
+    "rebounds": 3,
+    "turnovers": 1
+  },
+  {
+    "date": "APR 04, 2025",
+    "blocks": 0,
+    "fg_pct": 45.5,
+    "points": 22,
+    "steals": 3,
+    "3pt_pct": 16.7,
+    "assists": 8,
+    "rebounds": 4,
+    "turnovers": 3
+  },
+  {
+    "date": "APR 02, 2025",
+    "blocks": 2,
+    "fg_pct": 38.5,
+    "points": 33,
+    "steals": 3,
+    "3pt_pct": 28.599999999999998,
+    "assists": 3,
+    "rebounds": 6,
+    "turnovers": 1
+  },
+  {
+    "date": "MAR 31, 2025",
+    "blocks": 2,
+    "fg_pct": 64.3,
+    "points": 27,
+    "steals": 0,
+    "3pt_pct": 100,
+    "assists": 12,
+    "rebounds": 0,
+    "turnovers": 2
+  },
+  {
+    "date": "MAR 29, 2025",
+    "blocks": 0,
+    "fg_pct": 43.5,
+    "points": 33,
+    "steals": 1,
+    "3pt_pct": 50,
+    "assists": 8,
+    "rebounds": 7,
+    "turnovers": 0
+  },
+  {
+    "date": "MAR 27, 2025",
+    "blocks": 0,
+    "fg_pct": 60,
+    "points": 37,
+    "steals": 3,
+    "3pt_pct": 0,
+    "assists": 6,
+    "rebounds": 3,
+    "turnovers": 0
+  },
+  {
+    "date": "MAR 25, 2025",
+    "blocks": 0,
+    "fg_pct": 43.5,
+    "points": 32,
+    "steals": 0,
+    "3pt_pct": 50,
+    "assists": 5,
+    "rebounds": 8,
+    "turnovers": 5
+  },
+  {
+    "date": "MAR 23, 2025",
+    "blocks": 2,
+    "fg_pct": 24.099999999999998,
+    "points": 26,
+    "steals": 2,
+    "3pt_pct": 14.299999999999999,
+    "assists": 8,
+    "rebounds": 3,
+    "turnovers": 1
+  },
+  {
+    "date": "MAR 21, 2025",
+    "blocks": 0,
+    "fg_pct": 72.2,
+    "points": 30,
+    "steals": 1,
+    "3pt_pct": 100,
+    "assists": 9,
+    "rebounds": 6,
+    "turnovers": 1
+  }
+]

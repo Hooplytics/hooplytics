@@ -10,7 +10,7 @@ describe('verifying favorite and unfavorite functionality', () => {
 
     cy.intercept(
       { method: 'GET', url: '**/search/players*player=shai*' },
-      { fixture: 'players-sga.json' }
+      { fixture: 'sgaCard.json' }
     ).as('getSGA');
 
     cy.get('[data-cy="search"]').clear().type('shai{enter}');

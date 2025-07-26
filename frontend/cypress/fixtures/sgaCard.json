@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1628983,
+        "name": "Shai Gilgeous-Alexander",
+        "team": "OKC",
+        "image_url": "https://cdn.nba.com/headshots/nba/latest/1040x760/1628983.png",
+        "height": "6-6",
+        "weight": 195,
+        "position": "Guard",
+        "age": 26,
+        "pts": 32.7,
+        "ast": 6.4,
+        "reb": 5.0,
+        "blk": 1.0,
+        "stl": 1.7,
+        "tov": 2.4,
+        "fg_pct": 51.9,
+        "fg3_pct": 37.5
+    }
+]

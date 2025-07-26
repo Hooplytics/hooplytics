@@ -30,7 +30,7 @@ export function Graph({
     return (
         <div>
             <div className="chart-wrapper">
-                <select className="graph-select" onChange={(e) => {
+                <select data-cy="graph-stats" className="graph-select" onChange={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setGraphOption(e.target.value);
